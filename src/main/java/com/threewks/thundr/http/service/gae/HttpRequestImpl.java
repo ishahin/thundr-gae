@@ -45,6 +45,7 @@ import com.threewks.thundr.http.HttpSupport;
 import com.threewks.thundr.http.service.HttpRequest;
 import com.threewks.thundr.http.service.HttpRequestException;
 import com.threewks.thundr.http.service.HttpResponse;
+import com.threewks.thundr.util.Encoder;
 import com.threewks.thundr.util.Streams;
 
 public class HttpRequestImpl implements HttpRequest {
@@ -59,7 +60,6 @@ public class HttpRequestImpl implements HttpRequest {
 	private HttpServiceImpl httpService;
 	private String username;
 	private String password;
-	@SuppressWarnings("unused")
 	private String scheme;
 	@SuppressWarnings("unused")
 	private List<FileParameter> fileParameters = Collections.emptyList();
@@ -186,15 +186,8 @@ public class HttpRequestImpl implements HttpRequest {
 		return headGetDelete(HTTPMethod.HEAD);
 	}
 
-	/**
-	 * define client authentication for a server host
-	 * provided credentials will be used during the request
-	 * 
-	 * @param username
-	 * @param password
-	 * @return the WebRequest for chaining.
-	 */
-	public HttpRequest authenticate(String username, String password, String scheme) {
+	@Override
+	public HttpRequest authorize(String username, String password, String scheme) {
 		this.username = username;
 		this.password = password;
 		this.scheme = scheme;
@@ -210,8 +203,8 @@ public class HttpRequestImpl implements HttpRequest {
 	 * @param password
 	 * @return the WebRequest for chaining.
 	 */
-	public HttpRequest authenticate(String username, String password) {
-		return authenticate(username, password, "BASIC");
+	public HttpRequest authorize(String username, String password) {
+		return authorize(username, password, HttpSupport.Authorizations.Basic);
 	}
 
 	public HttpRequest files(FileParameter... fileParameters) {
@@ -230,6 +223,7 @@ public class HttpRequestImpl implements HttpRequest {
 		setContentTypeIfNotPresent(ContentType.TextPlain);
 		URL requestUrl = buildGetRequestUrl();
 		HTTPRequest request = new HTTPRequest(requestUrl, headGetDelete, fetchOptions);
+		addAuthorization(request);
 		addHeaders(request);
 		addCookies(request);
 		addBody(request);
@@ -247,6 +241,7 @@ public class HttpRequestImpl implements HttpRequest {
 		setContentTypeIfNotPresent(ContentType.ApplicationFormUrlEncoded);
 		URL requestUrl = buildPostRequestUrl();
 		HTTPRequest request = new HTTPRequest(requestUrl, postOrPut, fetchOptions);
+		addAuthorization(request);
 		addHeaders(request);
 		addCookies(request);
 		addBody(request);
@@ -315,6 +310,17 @@ public class HttpRequestImpl implements HttpRequest {
 		}
 	}
 
+	private void addAuthorization(HTTPRequest request) {
+		if (username != null && password != null) {
+			if (HttpSupport.Authorizations.Basic.equalsIgnoreCase(scheme)) {
+				String authorisation = HttpSupport.Authorizations.Basic + " " + new Encoder(this.username + ":" + this.password).base64().string();
+				request.addHeader(new HTTPHeader(HttpSupport.Header.Authorization, authorisation));
+			} else {
+				throw new HttpRequestException("%s only currently supports %s authorization", HttpServiceImpl.class.getSimpleName(), HttpSupport.Authorizations.Basic);
+			}
+		}
+	}
+
 	private void preparePostParameterBody() {
 		// if the body has been explicitly set, the consumer is handling data encoding
 		if (body == null) {
@@ -374,5 +380,4 @@ public class HttpRequestImpl implements HttpRequest {
 	public String toString() {
 		return url;
 	}
-	
 }
