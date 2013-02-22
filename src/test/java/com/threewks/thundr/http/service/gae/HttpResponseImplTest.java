@@ -40,10 +40,10 @@ public class HttpResponseImplTest {
 
 		List<String> cookieHeaders = HttpResponseImpl.getCookieHeaders(headers);
 		assertThat(cookieHeaders.size(), is(4));
-		assertThat(cookieHeaders, hasItem(is("cookie1")));
-		assertThat(cookieHeaders, hasItem(is("cookie2")));
-		assertThat(cookieHeaders, hasItem(is("cookie3")));
-		assertThat(cookieHeaders, hasItem(is("cookie4")));
+		assertThat(cookieHeaders, hasItem("cookie1"));
+		assertThat(cookieHeaders, hasItem("cookie2"));
+		assertThat(cookieHeaders, hasItem("cookie3"));
+		assertThat(cookieHeaders, hasItem("cookie4"));
 	}
 
 	@Test
