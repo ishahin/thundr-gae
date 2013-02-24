@@ -22,6 +22,14 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * Represents a search on the {@link SearchService}. Searches are performed by building the request up by invoking
+ * fluent methods.
+ * 
+ * 
+ * 
+ * @param <T>
+ */
 public class SearchRequest<T> {
 	private Class<T> type;
 	private GoogleSearchService searchService;
@@ -35,47 +43,99 @@ public class SearchRequest<T> {
 		this.type = type;
 	}
 
+	/**
+	 * includes a string query which applies across all fields in the index.
+	 * 
+	 * @param query
+	 * @return
+	 */
 	public SearchRequest<T> query(CharSequence query) {
 		this.queryFragments.add(query.toString());
 		return this;
 	}
 
+	/**
+	 * Limits the number of results in the final {@link SearchResult}
+	 * 
+	 * @param limit
+	 * @return
+	 */
 	public SearchRequest<T> limit(Integer limit) {
 		this.limit = limit;
 		return this;
 	}
 
+	/**
+	 * Adjusts the results in the final {@link SearchResult} such that the given number of results are skipped over
+	 * and not included in the results.
+	 * 
+	 * @param offset
+	 * @return
+	 */
 	public SearchRequest<T> offset(Integer offset) {
 		this.offset = offset;
 		return this;
 	}
 
+	/**
+	 * Defines a search operation on the given field to apply to the current search. The operation is specified on the returned {@link SearchOperation} instance.
+	 * 
+	 * e.g. search.field("fieldName").lessThan(50);
+	 * 
+	 * @param field
+	 * @return
+	 */
 	public SearchOperation<T> field(String field) {
 		field = encodeFieldName(field);
 		return new SearchOperation<T>(this, field);
 	}
 
+	/**
+	 * Defines a sort order on the given field to apply to the current search. The operation is specified on the returned {@link SortOperation} instance.
+	 * 
+	 * e.g. search.order("fieldName").ascending();
+	 * 
+	 * @param field
+	 * @return
+	 */
 	public SortOperation<T> order(String field) {
 		field = encodeFieldName(field);
 		return new SortOperation<T>(this, field);
 	}
 
+	/**
+	 * Performs the search operation by combining all the previously specified search operations, sort orders, limits and offset.
+	 * 
+	 * @return
+	 */
 	public SearchResult<T> search() {
 		return searchService.createSearchResult(this, type);
 	}
 
+	/**
+	 * @return the ordered series of query fragments that were specified on this search request
+	 */
 	public List<String> query() {
 		return queryFragments;
 	}
 
+	/**
+	 * @return the ordered series of sort operations that were specified on this search request
+	 */
 	public List<Sort> sort() {
 		return sortOrder;
 	}
 
+	/**
+	 * @return the limit applied to this search request
+	 */
 	public Integer limit() {
 		return limit;
 	}
 
+	/**
+	 * @return the offset applied to this search request
+	 */
 	public Integer offset() {
 		return offset;
 	}

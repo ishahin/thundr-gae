@@ -17,6 +17,11 @@
  */
 package com.threewks.thundr.search.google;
 
+/**
+ * The {@link SearchService} provides a java class based abstraction over a document search service.
+ * 
+ * @see GoogleSearchService
+ */
 public interface SearchService {
 
 	/**

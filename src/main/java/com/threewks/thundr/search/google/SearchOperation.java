@@ -36,7 +36,7 @@ public class SearchOperation<T> {
 	private static final String LessThan = "<";
 	private static final String Equals = "=";
 	private static final String Is = ":";
-	//private static final String IsLike = ":~";
+	// private static final String IsLike = ":~";
 
 	private static final DecimalFormat decimalFormat = new DecimalFormat("###0.##########");
 	private static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd");
@@ -48,108 +48,245 @@ public class SearchOperation<T> {
 		this.field = field;
 	}
 
+	/**
+	 * Includes results where the field matches the given value
+	 * 
+	 * @param value
+	 * @return the {@link SearchRequest}
+	 */
 	public SearchRequest<T> is(String value) {
 		return appendQuery(group(value), Is);
 	}
 
-	private String group(String value) {
-		return String.format("(%s)", value);
-	}
-
+	/**
+	 * Includes results where the field matches the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> is(Number value) {
 		return appendQuery(value, Is);
 	}
 
+	/**
+	 * Includes results where the field matches the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> is(Date value) {
 		return appendQuery(value, Is);
 	}
 
+	/**
+	 * Includes results where the field matches one of the given values
+	 * 
+	 * @param values
+	 * @return
+	 */
 	public SearchRequest<T> in(Date... values) {
 		return inDates(Arrays.asList(values));
 	}
 
+	/**
+	 * Includes results where the field matches one of the given values
+	 * 
+	 * @param values
+	 * @return
+	 */
 	public SearchRequest<T> inDates(Iterable<Date> values) {
 		String value = orValues(values, formatDates, false);
 		return appendQuery(value, Is);
 	}
 
+	/**
+	 * Includes results where the field matches one of the given values
+	 * 
+	 * @param values
+	 * @return
+	 */
 	public SearchRequest<T> in(Iterable<String> values) {
 		String value = orValues(values, noneTransformer, true);
 		return appendQuery(value, Is);
 	}
 
+	/**
+	 * Includes results where the field matches one of the given values
+	 * 
+	 * @param values
+	 * @return
+	 */
 	public SearchRequest<T> in(String... values) {
 		return in(Arrays.asList(values));
 	}
 
+	/**
+	 * Includes results where the field matches one of the given values
+	 * 
+	 * @param values
+	 * @return
+	 */
 	public SearchRequest<T> inNumbers(Iterable<Number> values) {
 		String value = orValues(values, formatNumbers, false);
 		return appendQuery(value, Is);
 	}
 
+	/**
+	 * Includes results where the field matches one of the given values
+	 * 
+	 * @param values
+	 * @return
+	 */
 	public SearchRequest<T> in(Number... values) {
 		return inNumbers(Arrays.asList(values));
 	}
 
-	// TODO - Search Service abstraction - equals is a terrible name for this, maybe eq or similar to avoid confusion with Object.equals
-	public SearchRequest<T> equals(String value) {
+	/**
+	 * Includes results where the field equals the given value
+	 * 
+	 * @param value
+	 * @return the {@link SearchRequest}
+	 */
+	public SearchRequest<T> eq(String value) {
 		return appendQuery(quote.from(value), Equals);
 	}
 
-	// TODO - Search Service abstraction - equals is a terrible name for this, maybe eq or similar to avoid confusion with Object.equals
-	public SearchRequest<T> equals(Number value) {
+	/**
+	 * Includes results where the field equals the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
+	public SearchRequest<T> eq(Number value) {
 		return appendQuery(value, Equals);
 	}
 
-	// TODO - Search Service abstraction - equals is a terrible name for this, maybe eq or similar to avoid confusion with Object.equals
-	public SearchRequest<T> equals(Date value) {
+	/**
+	 * Includes results where the field equals the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
+	public SearchRequest<T> eq(Date value) {
 		return appendQuery(value, Equals);
 	}
 
+	/**
+	 * Includes results where the field is less than the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> lessThan(String value) {
 		return appendQuery(quote.from(value), LessThan);
 	}
 
+	/**
+	 * Includes results where the field is less than the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> lessThan(Number value) {
 		return appendQuery(value, LessThan);
 	}
 
+	/**
+	 * Includes results where the field is less than the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> lessThan(Date value) {
 		return appendQuery(value, LessThan);
 	}
 
+	/**
+	 * Includes results where the field is less than or equal to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> lessThanEquals(String value) {
 		return appendQuery(quote.from(value), LessThanOrEqualTo);
 	}
 
+	/**
+	 * Includes results where the field is less than or equal to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> lessThanEquals(Number value) {
 		return appendQuery(value, LessThanOrEqualTo);
 	}
 
+	/**
+	 * Includes results where the field is less than or equal to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> lessThanEquals(Date value) {
 		return appendQuery(value, LessThanOrEqualTo);
 	}
 
+	/**
+	 * Includes results where the field is greater than to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> greaterThan(String value) {
 		return appendQuery(quote.from(value), GreaterThan);
 	}
 
+	/**
+	 * Includes results where the field is greater than to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> greaterThan(Number value) {
 		return appendQuery(value, GreaterThan);
 	}
 
+	/**
+	 * Includes results where the field is greater than to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> greaterThan(Date value) {
 		return appendQuery(value, GreaterThan);
 	}
 
+	/**
+	 * Includes results where the field is greater than or equal to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> greaterThanEquals(String value) {
 		return appendQuery(quote.from(value), GreatThanOrEqualTo);
 	}
 
+	/**
+	 * Includes results where the field is greater than or equal to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> greaterThanEquals(Number value) {
 		return appendQuery(value, GreatThanOrEqualTo);
 	}
 
+	/**
+	 * Includes results where the field is greater than or equal to the given value
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public SearchRequest<T> greaterThanEquals(Date value) {
 		return appendQuery(value, GreatThanOrEqualTo);
 	}
@@ -171,6 +308,10 @@ public class SearchOperation<T> {
 		List<String> strings = transformer.from(noNullValues);
 		List<String> quoted = isString ? quoteAll.from(strings) : strings;
 		return quoted.isEmpty() ? null : String.format("(%s)", StringUtils.join(quoted, " OR "));
+	}
+
+	private String group(String value) {
+		return String.format("(%s)", value);
 	}
 
 	private static ETransformer<Number, String> formatNumber = new ETransformer<Number, String>() {

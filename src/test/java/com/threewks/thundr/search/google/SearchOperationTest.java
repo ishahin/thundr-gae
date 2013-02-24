@@ -50,7 +50,7 @@ public class SearchOperationTest {
 
 	@Test
 	public void shouldApplyQueryForDateEquality() {
-		SearchRequest<BigDecimal> chained = searchOperation.equals(dateValue);
+		SearchRequest<BigDecimal> chained = searchOperation.eq(dateValue);
 
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName=2013-01-01");
@@ -79,6 +79,7 @@ public class SearchOperationTest {
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName>2013-01-01");
 	}
+
 	@Test
 	public void shouldApplyQueryForDateGreaterThanEquals() {
 		SearchRequest<BigDecimal> chained = searchOperation.greaterThanEquals(dateValue);
@@ -107,7 +108,7 @@ public class SearchOperationTest {
 
 	@Test
 	public void shouldApplyQueryForStringEquality() {
-		SearchRequest<BigDecimal> chained = searchOperation.equals(stringPhraseValue);
+		SearchRequest<BigDecimal> chained = searchOperation.eq(stringPhraseValue);
 
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName=\"String value\"");
@@ -163,7 +164,7 @@ public class SearchOperationTest {
 
 	@Test
 	public void shouldApplyQueryForSingleWordStringEquality() {
-		SearchRequest<BigDecimal> chained = searchOperation.equals(stringValue);
+		SearchRequest<BigDecimal> chained = searchOperation.eq(stringValue);
 
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName=\"string_value\"");
@@ -219,7 +220,7 @@ public class SearchOperationTest {
 
 	@Test
 	public void shouldApplyQueryForNumberAsLongEquality() {
-		SearchRequest<BigDecimal> chained = searchOperation.equals(longValue);
+		SearchRequest<BigDecimal> chained = searchOperation.eq(longValue);
 
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName=123");
@@ -276,7 +277,7 @@ public class SearchOperationTest {
 
 	@Test
 	public void shouldApplyQueryForNumberAsAtomicIntergerEquality() {
-		SearchRequest<BigDecimal> chained = searchOperation.equals(atomicIntValue);
+		SearchRequest<BigDecimal> chained = searchOperation.eq(atomicIntValue);
 
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName=123");
@@ -289,7 +290,7 @@ public class SearchOperationTest {
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName<123");
 	}
-	
+
 	@Test
 	public void shouldApplyQueryForNumberAsAtomicIntergerLessThanEquals() {
 		SearchRequest<BigDecimal> chained = searchOperation.lessThanEquals(atomicIntValue);
@@ -298,7 +299,6 @@ public class SearchOperationTest {
 		verify(searchRequest).query("fieldName<=123");
 	}
 
-
 	@Test
 	public void shouldApplyQueryForNumberAsAtomicIntergerGreaterThan() {
 		SearchRequest<BigDecimal> chained = searchOperation.greaterThan(atomicIntValue);
@@ -306,6 +306,7 @@ public class SearchOperationTest {
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName>123");
 	}
+
 	@Test
 	public void shouldApplyQueryForNumberAsAtomicIntergerGreaterThanEquals() {
 		SearchRequest<BigDecimal> chained = searchOperation.greaterThanEquals(atomicIntValue);
@@ -313,7 +314,6 @@ public class SearchOperationTest {
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName>=123");
 	}
-
 
 	@Test
 	public void shouldApplyQueryForNumberAsAtomicIntergerIs() {

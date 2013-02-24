@@ -30,7 +30,6 @@ import org.junit.Test;
 
 import com.google.appengine.tools.development.testing.LocalSearchServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
-import com.threewks.thundr.search.google.GoogleSearchService;
 
 public class SearchServiceTest {
 
