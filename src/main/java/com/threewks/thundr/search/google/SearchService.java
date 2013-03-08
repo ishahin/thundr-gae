@@ -30,8 +30,9 @@ public interface SearchService {
 	 * @param object the object to index.
 	 * @param id the id of the object.
 	 * @param fields the fields of the object to index.
+	 * @return 
 	 */
-	public <T> void index(T object, String id, Iterable<String> fields);
+	public <T> IndexOperation index(T object, String id, Iterable<String> fields);
 
 	/**
 	 * Remove objects from the index.

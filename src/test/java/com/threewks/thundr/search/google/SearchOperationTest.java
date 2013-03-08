@@ -331,4 +331,45 @@ public class SearchOperationTest {
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName:(123 OR 123456789)");
 	}
+
+	@Test
+	public void testCorrectNumericComparisions() {
+		GoogleSearchService searchService = mock(GoogleSearchService.class);
+		SearchRequest<TestPojo> request = new SearchRequest<TestPojo>(searchService, TestPojo.class);
+		SearchOperation<TestPojo> op = new SearchOperation<TestPojo>(request, "price");
+		op.greaterThanEquals(new BigDecimal(15.50));
+		assertThat(request.query().get(0), is("price>=15.5"));
+
+		request = new SearchRequest<TestPojo>(searchService, TestPojo.class);
+		op = new SearchOperation<TestPojo>(request, "price");
+		op.lessThanEquals(new BigDecimal(11.0));
+		assertThat(request.query().get(0), is("price<=11"));
+
+		request = new SearchRequest<TestPojo>(searchService, TestPojo.class);
+		op = new SearchOperation<TestPojo>(request, "price");
+		op.eq(new BigDecimal(11.0));
+		assertThat(request.query().get(0), is("price=11"));
+
+		request = new SearchRequest<TestPojo>(searchService, TestPojo.class);
+		op = new SearchOperation<TestPojo>(request, "price");
+		op.greaterThan(new BigDecimal(11.0));
+		assertThat(request.query().get(0), is("price>11"));
+
+		request = new SearchRequest<TestPojo>(searchService, TestPojo.class);
+		op = new SearchOperation<TestPojo>(request, "price");
+		op.lessThan(new BigDecimal(11.0));
+		assertThat(request.query().get(0), is("price<11"));
+	}
+
+	static class TestPojo {
+		private BigDecimal price;
+
+		public BigDecimal getPrice() {
+			return price;
+		}
+
+		public void setPrice(BigDecimal price) {
+			this.price = price;
+		}
+	}
 }

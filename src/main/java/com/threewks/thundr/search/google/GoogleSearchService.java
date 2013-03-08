@@ -21,11 +21,11 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 
 import jodd.bean.BeanUtil;
@@ -34,6 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
 import com.atomicleopard.expressive.Cast;
+import com.atomicleopard.expressive.collection.Pair;
 import com.atomicleopard.expressive.collection.Triplets;
 import com.google.appengine.api.search.Document;
 import com.google.appengine.api.search.Document.Builder;
@@ -43,6 +44,7 @@ import com.google.appengine.api.search.GetRequest;
 import com.google.appengine.api.search.GetResponse;
 import com.google.appengine.api.search.Index;
 import com.google.appengine.api.search.IndexSpec;
+import com.google.appengine.api.search.PutResponse;
 import com.google.appengine.api.search.Query;
 import com.google.appengine.api.search.QueryOptions;
 import com.google.appengine.api.search.Results;
@@ -67,67 +69,22 @@ public class GoogleSearchService implements SearchService {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> void index(T object, String id, Iterable<String> fields) {
-		index(object, (Class<T>) object.getClass(), id, fields);
+	public <T> IndexOperation index(T object, String id, Iterable<String> fields) {
+		return index(object, (Class<T>) object.getClass(), id, fields);
 	}
 
-	private <T> void index(T object, Class<T> as, String id, Iterable<String> fields) {
-		// we'll remove asynchronously so any existing items are removed while we build the document
-		Future<Void> removeFuture = removeAsync(as, Collections.singletonList(id));
+	private <T> IndexOperation index(T object, Class<T> as, String id, Iterable<String> fields) {
 		Index index = getIndex(as);
-		Map<String, Object> map = new HashMap<String, Object>();
-		for (String field : fields) {
-			boolean indexedProperty = BeanUtil.hasIndexProperty(object, field, true);
-			Object value = indexedProperty ? BeanUtil.getIndexProperty(object, field, true, true) : BeanUtil.getPropertySilently(object, field);
-			map.put(field, value);
-		}
-
-		Builder documentBuilder = Document.newBuilder();
-		documentBuilder.setId(id);
-		for (String field : fields) {
-			Object value = map.get(field);
-			if (value != null) {
-				try {
-					field = SearchRequest.encodeFieldName(field);
-					com.google.appengine.api.search.Field.Builder fieldBuilder = Field.newBuilder().setName(field);
-
-					String stringVal = Cast.as(value, String.class);
-					GeoPoint geoPointVal = stringVal != null ? null : Cast.as(value, GeoPoint.class);
-					Date dateVal = geoPointVal != null ? null : getAsDate(value);
-					BigDecimal numberVal = dateVal != null ? null : getAsNumber(value);
-					String collectionVal = numberVal != null ? null : getAsCollection(value);
-
-					if (dateVal != null) {
-						fieldBuilder.setDate(dateVal);
-					} else if (numberVal != null) {
-						fieldBuilder.setNumber(numberVal.doubleValue());
-					} else if (collectionVal != null) {
-						fieldBuilder.setText(collectionVal);
-					} else if (geoPointVal != null) {
-						fieldBuilder.setGeoPoint(geoPointVal);
-					} else {
-						fieldBuilder.setText(value.toString());
-					}
-					documentBuilder.addField(fieldBuilder);
-				} catch (Exception e) {
-					throw new SearchException(e, "Failed to index type %s with id %s for field %s with a value of %s: %s", as.getSimpleName(), id, field, value.toString(), e.getMessage());
-				}
-			}
-		}
-
-		Document document = documentBuilder.build();
-		try {
-			// wait for the delete to complete
-			removeFuture.get();
-		} catch (Exception e) {
-			Logger.error("Failed asynchonously removing potentially existing search index entries while indexing %s(%s): %s", as.getSimpleName(), id, e.getMessage());
-		}
-		index.putAsync(document);
+		Map<String, Object> map = extractSearchableFields(object, fields);
+		Document document = buildDocument(as, id, map);
+		Future<PutResponse> putAsync = index.putAsync(document);
+		return new IndexOperation(putAsync);
 	}
 
 	@Override
 	public <T> void remove(Class<T> as, Iterable<String> ids) {
-		removeAsync(as, ids);
+		Index index = getIndex(as);
+		index.delete(ids);
 	}
 
 	@Override
@@ -148,11 +105,6 @@ public class GoogleSearchService implements SearchService {
 			response = index.getRange(request);
 		}
 		return count;
-	}
-
-	private <T> Future<Void> removeAsync(Class<T> as, Iterable<String> ids) {
-		Index index = getIndex(as);
-		return index.deleteAsync(ids);
 	}
 
 	@Override
@@ -223,8 +175,6 @@ public class GoogleSearchService implements SearchService {
 		return null;
 	}
 
-	private Triplets<Class<?>, String, Boolean> isFieldNumericLookup = new Triplets<Class<?>, String, Boolean>();
-
 	@SuppressWarnings("rawtypes")
 	private Class getPropertyType(Class type, String field) {
 		String getterName = "get" + StringUtils.capitalize(field);
@@ -260,6 +210,8 @@ public class GoogleSearchService implements SearchService {
 		return clazz;
 	}
 
+	private Triplets<Class<?>, String, Boolean> isFieldNumericLookup = new Triplets<Class<?>, String, Boolean>(new ConcurrentHashMap<Pair<Class<?>, String>, Boolean>());
+
 	/**
 	 * We need to know when doing a search if a field has a numeric representation or not - this method will tell us based on
 	 * the current bean definition (that is, this is probably weak based on type migration.
@@ -279,7 +231,7 @@ public class GoogleSearchService implements SearchService {
 		return isNumeric;
 	}
 
-	// TODO - Search Service abstraction - type mapping and conversion between input data and what is supported in 
+	// TODO - Search Service abstraction - type mapping and conversion between input data and what is supported in
 	// the search API is a wider problem. A full type conversion strategy would be useful here.
 	private Date getAsDate(Object value) {
 		if (value instanceof Date) {
@@ -289,5 +241,58 @@ public class GoogleSearchService implements SearchService {
 			return ((DateTime) value).toDate();
 		}
 		return null;
+	}
+
+	private <T> Map<String, Object> extractSearchableFields(T object, Iterable<String> fields) {
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
+		for (String field : fields) {
+			boolean indexedProperty = BeanUtil.hasIndexProperty(object, field, true);
+			Object value = indexedProperty ? BeanUtil.getIndexProperty(object, field, true, true) : BeanUtil.getPropertySilently(object, field);
+			map.put(field, value);
+		}
+		return map;
+	}
+
+	private <T> Document buildDocument(Class<T> as, String id, Map<String, Object> fields) {
+		Builder documentBuilder = Document.newBuilder();
+		documentBuilder.setId(id);
+		for (Map.Entry<String, Object> fieldData : fields.entrySet()) {
+			Object value = fieldData.getValue();
+			String fieldName = fieldData.getKey();
+			if (value != null) {
+				try {
+					Field field = buildField(fieldName, value);
+					documentBuilder.addField(field);
+				} catch (Exception e) {
+					throw new SearchException(e, "Failed to index type %s with id %s for field %s with a value of %s: %s", as.getSimpleName(), id, fieldName, value.toString(), e.getMessage());
+				}
+			}
+		}
+
+		return documentBuilder.build();
+	}
+
+	private Field buildField(String field, Object value) {
+		field = SearchRequest.encodeFieldName(field);
+		com.google.appengine.api.search.Field.Builder fieldBuilder = Field.newBuilder().setName(field);
+
+		String stringVal = Cast.as(value, String.class);
+		GeoPoint geoPointVal = stringVal != null ? null : Cast.as(value, GeoPoint.class);
+		Date dateVal = geoPointVal != null ? null : getAsDate(value);
+		BigDecimal numberVal = dateVal != null ? null : getAsNumber(value);
+		String collectionVal = numberVal != null ? null : getAsCollection(value);
+
+		if (dateVal != null) {
+			fieldBuilder.setDate(dateVal);
+		} else if (numberVal != null) {
+			fieldBuilder.setNumber(numberVal.doubleValue());
+		} else if (collectionVal != null) {
+			fieldBuilder.setText(collectionVal);
+		} else if (geoPointVal != null) {
+			fieldBuilder.setGeoPoint(geoPointVal);
+		} else {
+			fieldBuilder.setText(value.toString());
+		}
+		return fieldBuilder.build();
 	}
 }
