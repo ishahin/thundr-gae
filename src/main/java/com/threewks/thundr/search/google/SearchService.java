@@ -17,6 +17,8 @@
  */
 package com.threewks.thundr.search.google;
 
+import java.util.Map;
+
 /**
  * The {@link SearchService} provides a java class based abstraction over a document search service.
  * 
@@ -35,12 +37,21 @@ public interface SearchService {
 	public <T> IndexOperation index(T object, String id, Iterable<String> fields);
 
 	/**
+	 * Index many homogenous objects
+	 * @param objects the objects to be indexed, keyed on their ids 
+	 * @param fields the fields of the objects to index
+	 * @return
+	 */
+	public <T> IndexOperation index(Map<String, T> objects, Iterable<String> fields);
+	
+	/**
 	 * Remove objects from the index.
 	 * 
 	 * @param as the type of the object.
 	 * @param ids the ids of the objects to remove.
+	 * @return 
 	 */
-	public <T> void remove(Class<T> as, Iterable<String> ids);
+	public <T> IndexOperation remove(Class<T> as, Iterable<String> ids);
 
 	/**
 	 * Remove all objects of a given type from the index.
@@ -57,5 +68,4 @@ public interface SearchService {
 	 * @return a {@link SearchRequest} that can be used to search.
 	 */
 	public <T> SearchRequest<T> search(Class<T> type);
-
 }

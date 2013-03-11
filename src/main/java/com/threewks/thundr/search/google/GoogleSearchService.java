@@ -67,13 +67,9 @@ public class GoogleSearchService implements SearchService {
 		this.profiler = profiler;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public <T> IndexOperation index(T object, String id, Iterable<String> fields) {
-		return index(object, (Class<T>) object.getClass(), id, fields);
-	}
-
-	private <T> IndexOperation index(T object, Class<T> as, String id, Iterable<String> fields) {
+		Class<T> as = getType(object);
 		Index index = getIndex(as);
 		Map<String, Object> map = extractSearchableFields(object, fields);
 		Document document = buildDocument(as, id, map);
@@ -82,9 +78,33 @@ public class GoogleSearchService implements SearchService {
 	}
 
 	@Override
-	public <T> void remove(Class<T> as, Iterable<String> ids) {
+	public <T> IndexOperation index(Map<String, T> objects, Iterable<String> fields) {
+		Future<PutResponse> future = null;
+		if (!objects.isEmpty()) {
+			String first = objects.keySet().iterator().next();
+			T t = objects.get(first);
+			Class<T> as = getType(t);
+			Index index = getIndex(as);
+
+			List<Document> documents = new ArrayList<Document>(objects.size());
+			for (Map.Entry<String, T> entry : objects.entrySet()) {
+				String id = entry.getKey();
+				T object = entry.getValue();
+				Map<String, Object> fieldValues = extractSearchableFields(object, fields);
+				Document document = buildDocument(as, id, fieldValues);
+				documents.add(document);
+			}
+			future = index.putAsync(documents);
+		}
+
+		return new IndexOperation(future);
+	}
+
+	@Override
+	public <T> IndexOperation remove(Class<T> as, Iterable<String> ids) {
 		Index index = getIndex(as);
-		index.delete(ids);
+		Future<Void> deleteAsync = index.deleteAsync(ids);
+		return new IndexOperation(deleteAsync);
 	}
 
 	@Override
@@ -294,5 +314,10 @@ public class GoogleSearchService implements SearchService {
 			fieldBuilder.setText(value.toString());
 		}
 		return fieldBuilder.build();
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> Class<T> getType(T t) {
+		return (Class<T>) t.getClass();
 	}
 }

@@ -20,23 +20,23 @@ package com.threewks.thundr.search.google;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import com.google.appengine.api.search.PutResponse;
-
 public class IndexOperation {
 
-	private Future<PutResponse> future;
+	private Future<?> future;
 
-	public IndexOperation(Future<PutResponse> future) {
-		this.future = future;
+	public IndexOperation(Future<?> future2) {
+		this.future = future2;
 	}
 
 	public void complete() {
-		try {
-			future.get();
-		} catch (ExecutionException e) {
-			throw new SearchException(e, "Failed to complete search index operation: %s", e.getMessage());
-		} catch (InterruptedException e) {
-			throw new SearchException(e, "Failed to complete search index operation: %s", e.getMessage());
+		if (future != null) {
+			try {
+				future.get();
+			} catch (ExecutionException e) {
+				throw new SearchException(e, "Failed to complete search index operation: %s", e.getMessage());
+			} catch (InterruptedException e) {
+				throw new SearchException(e, "Failed to complete search index operation: %s", e.getMessage());
+			}
 		}
 	}
 }

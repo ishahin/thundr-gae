@@ -20,10 +20,14 @@ package com.threewks.thundr.search.google;
 import static com.atomicleopard.expressive.Expressive.list;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -34,7 +38,10 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
+import com.atomicleopard.expressive.Expressive;
 import com.google.appengine.api.search.Document;
+import com.google.appengine.api.search.GetRequest;
+import com.google.appengine.api.search.GetResponse;
 import com.google.appengine.api.search.Index;
 import com.google.appengine.api.search.IndexSpec;
 import com.google.appengine.api.search.PutResponse;
@@ -124,6 +131,88 @@ public class SearchServiceTest {
 		assertThat(document.getOnlyField("boolType").getText(), is("true"));
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Test
+	public void shouldIndexObjects() {
+		Index index = mock(Index.class);
+		Future<PutResponse> future = mock(Future.class);
+		when(index.putAsync(Mockito.<Document> anyVararg())).thenReturn(future);
+		SearchService localSearchService = spySearchService();
+		doReturn(index).when(localSearchService).getIndex(Mockito.any(IndexSpec.class));
+
+		Map<String, Object> objects = new LinkedHashMap<String, Object>();
+		objects.put("1", testType);
+		objects.put("2", new TestType(100, 2000L, new BigDecimal("100.2300"), "String String", new Date(1000), false));
+
+		searchService.index(objects, list("intType", "longType", "bigDecType", "stringType", "dateType", "boolType"));
+
+		ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
+		verify(index).putAsync(captor.capture());
+
+		List<Document> document = captor.getValue();
+		assertThat(document.get(0).getId(), is("1"));
+		assertThat(document.get(0).getOnlyField("intType").getNumber(), is(1d));
+		assertThat(document.get(0).getOnlyField("longType").getNumber(), is(2d));
+		assertThat(document.get(0).getOnlyField("bigDecType").getNumber(), is(1.23d));
+		assertThat(document.get(0).getOnlyField("stringType").getText(), is("String"));
+		assertThat(document.get(0).getOnlyField("dateType").getDate(), is(new Date(1)));
+		assertThat(document.get(0).getOnlyField("boolType").getText(), is("true"));
+
+		assertThat(document.get(1).getId(), is("2"));
+		assertThat(document.get(1).getOnlyField("intType").getNumber(), is(100d));
+		assertThat(document.get(1).getOnlyField("longType").getNumber(), is(2000d));
+		assertThat(document.get(1).getOnlyField("bigDecType").getNumber(), is(100.2300d));
+		assertThat(document.get(1).getOnlyField("stringType").getText(), is("String String"));
+		assertThat(document.get(1).getOnlyField("dateType").getDate(), is(new Date(1000)));
+		assertThat(document.get(1).getOnlyField("boolType").getText(), is("false"));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void shouldRemoveFromIndex() throws InterruptedException, ExecutionException {
+		Index index = mock(Index.class);
+		Future<Void> future = mock(Future.class);
+		when(index.deleteAsync(anyListOf(String.class))).thenReturn(future);
+		SearchService localSearchService = spySearchService();
+		doReturn(index).when(localSearchService).getIndex(Mockito.any(IndexSpec.class));
+
+		IndexOperation indexOperation = searchService.remove(TestType.class, list("1", "2"));
+
+		verify(index).deleteAsync(list("1", "2"));
+
+		indexOperation.complete();
+
+		verify(future).get();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void shouldRemoveAllFromIndex() throws InterruptedException, ExecutionException {
+		Index index = mock(Index.class);
+
+		GetResponse<Document> response = mock(GetResponse.class);
+		when(index.getRange(Mockito.any(GetRequest.class))).thenReturn(response);
+		SearchService localSearchService = spySearchService();
+		doReturn(index).when(localSearchService).getIndex(Mockito.any(IndexSpec.class));
+
+		Document doc1 = mockDocument("1");
+		Document doc2 = mockDocument("2");
+		when(response.getResults()).thenReturn(list(doc1, doc2), Expressive.<Document> list());
+		when(response.iterator()).thenReturn(list(doc1, doc2).iterator(), Expressive.<Document> list().iterator());
+
+		int count = searchService.removeAll(TestType.class);
+
+		verify(index).delete(list("1", "2"));
+		assertThat(count, is(2));
+
+	}
+
+	private Document mockDocument(String idg) {
+		Document doc = mock(Document.class);
+		when(doc.getId()).thenReturn(idg);
+		return doc;
+	}
+
 	private SearchService spySearchService() {
 		SearchService localSearchService = TestSupport.getField(searchService, "searchService");
 		localSearchService = spy(localSearchService);
@@ -174,5 +263,4 @@ public class SearchServiceTest {
 			return boolType;
 		}
 	}
-
 }
