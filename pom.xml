@@ -6,7 +6,7 @@
 	</parent>
 	<artifactId>thundr-gae</artifactId>
 	<packaging>jar</packaging>
-	<version>0.9.7a</version>
+	<version>0.9.7b-SNAPSHOT</version>
 
 	<name>thundr-gae</name>
 	<url>http://3wks.github.com/thundr/</url>
@@ -47,7 +47,7 @@
 		<connection>scm:git:https://github.com/3wks/thundr-gae</connection>
 		<developerConnection>scm:git:https://github.com/3wks/thundr-gae</developerConnection>
 		<url>https://github.com/3wks/thundr-gae</url>
-		<tag>thundr-gae-0.9.7a</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<properties>
