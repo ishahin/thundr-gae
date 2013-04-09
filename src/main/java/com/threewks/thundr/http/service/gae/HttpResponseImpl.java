@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import com.atomicleopard.expressive.EList;
 import com.atomicleopard.expressive.Expressive;
 import com.google.appengine.api.urlfetch.HTTPHeader;
 import com.google.appengine.api.urlfetch.HTTPResponse;
@@ -147,7 +148,7 @@ public class HttpResponseImpl implements HttpResponse {
 
 	private Map<String, List<String>> buildHeaderMap() {
 		Map<String, List<String>> headers = new LinkedHashMap<String, List<String>>();
-		for (HTTPHeader header : response.getHeaders()) {
+		for (HTTPHeader header : response.getHeadersUncombined()) {
 			String key = header.getName();
 			String value = header.getValue();
 			List<String> values = headers.get(key);
@@ -186,15 +187,9 @@ public class HttpResponseImpl implements HttpResponse {
 	 * @return a list of headers.
 	 */
 	static List<String> getCookieHeaders(Map<String, List<String>> headers) {
-		List<String> cookieHeaders = new ArrayList<String>();
-		List<String> setCookieHeaders = headers.get(Header.SetCookie);
-		if (setCookieHeaders != null) {
-			cookieHeaders.addAll(setCookieHeaders);
-		}
-		List<String> setCookie2Headers = headers.get(Header.SetCookie2);
-		if (setCookie2Headers != null) {
-			cookieHeaders.addAll(setCookie2Headers);
-		}
+		EList<String> cookieHeaders = Expressive.list();
+		cookieHeaders.addItems(headers.get(Header.SetCookie));
+		cookieHeaders.addItems(headers.get(Header.SetCookie2));
 		return cookieHeaders;
 	}
 
@@ -210,7 +205,12 @@ public class HttpResponseImpl implements HttpResponse {
 		try {
 			cookies = HttpCookie.parse(setCookieHeader);
 		} catch (Exception e) {
-			Logger.warn("Unable to parse cookie from header: %s", setCookieHeader);
+			try {
+				// old version of java (<7) fail for cookies with HttpOnly present, we'll strip that out and try again
+				cookies = HttpCookie.parse(setCookieHeader.replaceAll("(?i);\\s*HttpOnly", ""));
+			} catch (Exception e2) {
+				Logger.warn("Unable to parse cookie from header '%s': %s", setCookieHeader, e2.getMessage());
+			}
 		}
 		return cookies;
 	}
