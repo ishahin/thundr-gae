@@ -266,8 +266,7 @@ public class GoogleSearchService implements SearchService {
 	private <T> Map<String, Object> extractSearchableFields(T object, Iterable<String> fields) {
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		for (String field : fields) {
-			boolean indexedProperty = BeanUtil.hasIndexProperty(object, field, true);
-			Object value = indexedProperty ? BeanUtil.getIndexProperty(object, field, true, true) : BeanUtil.getPropertySilently(object, field);
+			Object value = BeanUtil.getDeclaredPropertySilently(object, field);
 			map.put(field, value);
 		}
 		return map;

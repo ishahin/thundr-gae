@@ -6,7 +6,7 @@
 	</parent>
 	<artifactId>thundr-gae</artifactId>
 	<packaging>jar</packaging>
-	<version>0.9.7b-SNAPSHOT</version>
+	<version>0.9.8-SNAPSHOT</version>
 
 	<name>thundr-gae</name>
 	<url>http://3wks.github.com/thundr/</url>
@@ -51,7 +51,7 @@
 	</scm>
 
 	<properties>
-		<gae.version>1.7.4</gae.version>
+		<gae.version>1.7.7.1</gae.version>
 	</properties>
 
 	<dependencies>
@@ -59,13 +59,13 @@
 		<dependency>
 			<groupId>com.threewks.thundr</groupId>
 			<artifactId>thundr</artifactId>
-			<version>0.9.7</version>
+			<version>0.9.8-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.threewks.thundr</groupId>
 			<artifactId>thundr-http</artifactId>
-			<version>0.9.7</version>
+			<version>0.9.8-SNAPSHOT</version>
 			<scope>compile</scope>
 		</dependency>
 

@@ -113,7 +113,7 @@ public class SearchResult<T> {
 			try {
 				T instance = type.newInstance();
 				for (Map.Entry<String, Object> entry : from.entrySet()) {
-					BeanUtil.setSimpleProperty(instance, entry.getKey(), entry.getValue(), true);
+					BeanUtil.setPropertyForced(instance, entry.getKey(), entry.getValue());
 				}
 				return instance;
 			} catch (Exception e) {
