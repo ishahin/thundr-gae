@@ -51,7 +51,7 @@
 	</scm>
 
 	<properties>
-		<gae.version>1.7.7.1</gae.version>
+		<gae.version>1.8.1.1</gae.version>
 	</properties>
 
 	<dependencies>
@@ -59,13 +59,13 @@
 		<dependency>
 			<groupId>com.threewks.thundr</groupId>
 			<artifactId>thundr</artifactId>
-			<version>0.9.8</version>
+			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.threewks.thundr</groupId>
 			<artifactId>thundr-http</artifactId>
-			<version>0.9.8</version>
+			<version>${project.version}</version>
 			<scope>compile</scope>
 		</dependency>
 
@@ -76,7 +76,7 @@
 			<version>${gae.version}</version>
 			<scope>compile</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>

@@ -17,29 +17,39 @@
  */
 package com.threewks.thundr.gae;
 
+import jodd.util.StringPool;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.appengine.api.utils.SystemProperty;
 import com.google.appengine.api.utils.SystemProperty.Environment;
 
 public class GaeEnvironment {
+	private static final String DEV_APPLICATION_ID = "dev";
+
 	/**
-	 * @return The application version with dot separator appended for
-	 *         production environment otherwise returns empty string
+	 * @return The application version deployed to. In dev server, returns an empty string
 	 */
 	public static String applicationVersion() {
 		// The version identifier for the current application version.
-		// Result is of the form <major>.<minor> where <major> is the
-		// version name supplied at deploy time
+		// Result is of the form <major>.<minor> where <major> is the version name supplied at deploy time
 		// and <minor> is a timestamp value maintained by App Engine
-		if (isProduction() && SystemProperty.applicationVersion.get().contains(".")) {
-			return StringUtils.substringBefore(SystemProperty.applicationVersion.get(), ".").concat(".");
-		}
-
-		return "";
+		String fullApplicationVersion = SystemProperty.applicationVersion.get();
+		return isProduction() ? StringUtils.substringBefore(fullApplicationVersion, ".") : StringPool.EMPTY;
 	}
 
 	public static boolean isProduction() {
 		return Environment.Value.Production.name() == SystemProperty.Environment.environment.get();
+	}
+
+	/**
+	 * Get the application id of the running application. When running in Development mode
+	 * (ie: in a local SDK environment) this simply returns the value "dev". When running
+	 * in Production mode, this returns the value of the application id.
+	 * 
+	 * @return the application id.
+	 */
+	public static String applicationId() {
+		return isProduction() ? SystemProperty.applicationId.get() : DEV_APPLICATION_ID;
 	}
 }

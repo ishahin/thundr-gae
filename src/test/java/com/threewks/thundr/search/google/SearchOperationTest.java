@@ -201,6 +201,15 @@ public class SearchOperationTest {
 		assertThat(chained, is(sameInstance(searchRequest)));
 		verify(searchRequest).query("fieldName>=\"string_value\"");
 	}
+	
+	@Test
+	public void shouldApplyQueryForEscapedQuotedSingleWordString() {
+		String quotedStringValue = "\"Oh no\" says O'Neil";
+		SearchRequest<BigDecimal> chained = searchOperation.eq(quotedStringValue);
+
+		assertThat(chained, is(sameInstance(searchRequest)));
+		verify(searchRequest).query("fieldName=\"\\\"Oh no\\\" says O'Neil\"");
+	}
 
 	@Test
 	public void shouldApplyQueryForSingleWordStringIs() {

@@ -48,7 +48,12 @@ public class SearchResult<T> {
 		this.offset = offset;
 	}
 
-	public EList<T> getSearchResults() throws SearchException {
+	/**
+	 * TODO: The implementation of this only works in trivial situations. Further work will be done here
+	 * in the future to allow the usage of the SearchService to store an entire document.
+	 */
+	@Deprecated
+	protected EList<T> getSearchResults() throws SearchException {
 		List<ScoredDocument> results = resultsList();
 		EList<Map<String, Object>> data = toMap.from(results);
 		EList<T> objects = toBean.from(data);
@@ -113,7 +118,7 @@ public class SearchResult<T> {
 			try {
 				T instance = type.newInstance();
 				for (Map.Entry<String, Object> entry : from.entrySet()) {
-					BeanUtil.setPropertyForced(instance, entry.getKey(), entry.getValue());
+					BeanUtil.setDeclaredPropertyForcedSilent(instance, entry.getKey(), entry.getValue());
 				}
 				return instance;
 			} catch (Exception e) {

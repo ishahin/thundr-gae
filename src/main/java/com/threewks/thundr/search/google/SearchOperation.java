@@ -329,6 +329,7 @@ public class SearchOperation<T> {
 	private static ETransformer<String, String> quote = new ETransformer<String, String>() {
 		@Override
 		public String from(String from) {
+			from = from.replaceAll("\"", "\\\\\"");
 			return String.format("\"%s\"", from);
 		}
 	};
