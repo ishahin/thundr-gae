@@ -146,12 +146,10 @@ public class GoogleSearchService implements SearchService {
 				expression = expression.setDefaultValue("");
 			}
 			sortOptions = sortOptions.addSortExpression(expression);
-			sortOptions = sortOptions.setLimit(10000);
 		}
 
 		QueryOptions.Builder queryOptions = QueryOptions.newBuilder();
 		queryOptions.setSortOptions(sortOptions);
-		queryOptions.setNumberFoundAccuracy(10000);
 		Integer limit = searchRequest.limit();
 		int offset = 0;
 		if (limit != null) {
@@ -162,16 +160,16 @@ public class GoogleSearchService implements SearchService {
 						limit, effectiveLimit);
 			}
 			limit = effectiveLimit;
-		} else {
-			limit = 1000;
+			/* Note, this can't be more than 1000 (Crashes) */
+			queryOptions = queryOptions.setLimit(limit); 
 		}
-		queryOptions = queryOptions.setLimit(limit); /* Note, this can't be more than 1000 (Crashes) */
 
 		Query query = Query.newBuilder().setOptions(queryOptions).build(queryString);
 		Future<Results<ScoredDocument>> searchAsync = index.searchAsync(query);
 		if (profiler != null) {
 			searchAsync = new ProfilableFuture<Results<ScoredDocument>>(Profiler.CategorySearch, queryString, profiler, searchAsync);
 		}
+		Logger.debug("Text search on %s: %s", index.getName(), queryString);
 		return new SearchResult<T>(type, searchAsync, searchRequest.offset());
 	}
 
