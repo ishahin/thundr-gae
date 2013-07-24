@@ -2,7 +2,7 @@
 	<parent>
 		<groupId>com.threewks.thundr</groupId>
 		<artifactId>thundr-parent</artifactId>
-		<version>1</version>
+		<version>3</version>
 	</parent>
 	<artifactId>thundr-gae</artifactId>
 	<packaging>jar</packaging>
@@ -51,7 +51,7 @@
 	</scm>
 
 	<properties>
-		<gae.version>1.8.1.1</gae.version>
+		<gae.version>1.8.2</gae.version>
 	</properties>
 
 	<dependencies>
@@ -96,6 +96,13 @@
 			<groupId>com.google.appengine</groupId>
 			<artifactId>appengine-testing</artifactId>
 			<version>${gae.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.simpleframework</groupId>
+			<artifactId>simple</artifactId>
+			<version>4.1.21</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

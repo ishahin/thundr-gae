@@ -163,7 +163,6 @@ public class GoogleSearchService implements SearchService {
 			/* Note, this can't be more than 1000 (Crashes) */
 			queryOptions = queryOptions.setLimit(limit); 
 		}
-
 		Query query = Query.newBuilder().setOptions(queryOptions).build(queryString);
 		Future<Results<ScoredDocument>> searchAsync = index.searchAsync(query);
 		if (profiler != null) {

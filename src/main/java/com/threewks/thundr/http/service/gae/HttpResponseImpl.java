@@ -118,7 +118,9 @@ public class HttpResponseImpl implements HttpResponse {
 
 	@Override
 	public InputStream getBodyAsStream() {
-		return new ByteArrayInputStream(response().getContent());
+		byte[] content = response().getContent();
+		content = content == null ?  new byte[0] : content;
+		return new ByteArrayInputStream(content);
 	}
 
 	@Override
