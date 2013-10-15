@@ -30,10 +30,12 @@ public class GaeInjectionConfiguration implements InjectionConfiguration {
 	@Override
 	public void configure(UpdatableInjectionContext injectionContext) {
 		Environment.set(GaeEnvironment.applicationId());
-		Logger.info("Running as environment %s", Environment.get());
+		String environment = Environment.get();
+		Logger.info("Running as environment %s", environment);
 
 		URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
 		injectionContext.inject(urlFetchService).as(URLFetchService.class);
 		injectionContext.inject(HttpServiceImpl.class).as(HttpService.class);
+		injectionContext.inject(environment).named("environment").as(String.class);
 	}
 }

@@ -25,8 +25,6 @@ import com.google.appengine.api.utils.SystemProperty;
 import com.google.appengine.api.utils.SystemProperty.Environment;
 
 public class GaeEnvironment {
-	private static final String DEV_APPLICATION_ID = "dev";
-
 	/**
 	 * @return The application version deployed to. In dev server, returns an empty string
 	 */
@@ -50,6 +48,6 @@ public class GaeEnvironment {
 	 * @return the application id.
 	 */
 	public static String applicationId() {
-		return isProduction() ? SystemProperty.applicationId.get() : DEV_APPLICATION_ID;
+		return isProduction() ? SystemProperty.applicationId.get() : com.threewks.thundr.configuration.Environment.DEV;
 	}
 }

@@ -55,6 +55,7 @@ public class GaeInjectionConfigurationTest {
 	@After
 	public void after() {
 		helper.tearDown();
+		Environment.set(null);
 	}
 
 	@Test
@@ -62,6 +63,12 @@ public class GaeInjectionConfigurationTest {
 		Environment.set(null);
 		new GaeInjectionConfiguration().configure(injectionContext);
 		assertThat(Environment.get(), is("dev"));
+	}
+
+	@Test
+	public void shouldInjectEnvironmentStringIntoInjectionContextWhenNoEnvironmentDefined() {
+		new GaeInjectionConfiguration().configure(injectionContext);
+		assertThat(injectionContext.get(String.class, "environment"), is("dev"));
 	}
 
 	@Test
