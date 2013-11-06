@@ -40,7 +40,6 @@ import com.threewks.thundr.http.service.HttpResponse;
 import com.threewks.thundr.http.service.HttpResponseException;
 import com.threewks.thundr.http.service.HttpService;
 import com.threewks.thundr.logger.Logger;
-import com.threewks.thundr.profiler.Profiler;
 
 public class HttpResponseImpl implements HttpResponse {
 	private Future<HTTPResponse> future;
@@ -48,12 +47,10 @@ public class HttpResponseImpl implements HttpResponse {
 	private Map<String, List<String>> headers;
 	private HttpService service;
 	private Map<String, List<HttpCookie>> cookies;
-	private Profiler profiler;
 
 	public HttpResponseImpl(Future<HTTPResponse> future, HttpService service) {
 		this.future = future;
 		this.service = service;
-		this.profiler = profiler == null ? Profiler.None : profiler;
 	}
 
 	@Override
@@ -119,7 +116,7 @@ public class HttpResponseImpl implements HttpResponse {
 	@Override
 	public InputStream getBodyAsStream() {
 		byte[] content = response().getContent();
-		content = content == null ?  new byte[0] : content;
+		content = content == null ? new byte[0] : content;
 		return new ByteArrayInputStream(content);
 	}
 

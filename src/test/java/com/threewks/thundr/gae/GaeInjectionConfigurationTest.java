@@ -35,8 +35,6 @@ import com.threewks.thundr.configuration.Environment;
 import com.threewks.thundr.http.service.HttpService;
 import com.threewks.thundr.injection.InjectionContextImpl;
 import com.threewks.thundr.injection.UpdatableInjectionContext;
-import com.threewks.thundr.profiler.NoProfiler;
-import com.threewks.thundr.profiler.Profiler;
 
 public class GaeInjectionConfigurationTest {
 	private LocalServiceTestHelper helper;
@@ -61,19 +59,18 @@ public class GaeInjectionConfigurationTest {
 	@Test
 	public void shouldSetThundrEnvironmentFromAppengineEnvironment() {
 		Environment.set(null);
-		new GaeInjectionConfiguration().configure(injectionContext);
+		new GaeInjectionConfiguration().initialise(injectionContext);
 		assertThat(Environment.get(), is("dev"));
 	}
 
 	@Test
 	public void shouldInjectEnvironmentStringIntoInjectionContextWhenNoEnvironmentDefined() {
-		new GaeInjectionConfiguration().configure(injectionContext);
+		new GaeInjectionConfiguration().initialise(injectionContext);
 		assertThat(injectionContext.get(String.class, "environment"), is("dev"));
 	}
 
 	@Test
 	public void shouldInjectHttpService() {
-		injectionContext.inject(NoProfiler.class).as(Profiler.class);
 		new GaeInjectionConfiguration().configure(injectionContext);
 		assertThat(injectionContext.get(HttpService.class), is(notNullValue()));
 		assertThat(injectionContext.get(URLFetchService.class), is(notNullValue()));

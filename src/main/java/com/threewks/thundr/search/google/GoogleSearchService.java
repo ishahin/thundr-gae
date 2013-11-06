@@ -53,18 +53,11 @@ import com.google.appengine.api.search.SearchServiceFactory;
 import com.google.appengine.api.search.SortExpression;
 import com.google.appengine.api.search.SortOptions;
 import com.threewks.thundr.logger.Logger;
-import com.threewks.thundr.profiler.ProfilableFuture;
-import com.threewks.thundr.profiler.Profiler;
 
 public class GoogleSearchService implements SearchService {
 	private com.google.appengine.api.search.SearchService searchService = SearchServiceFactory.getSearchService();
-	private Profiler profiler;
 
 	public GoogleSearchService() {
-	}
-
-	public void setProfiler(Profiler profiler) {
-		this.profiler = profiler;
 	}
 
 	@Override
@@ -161,13 +154,10 @@ public class GoogleSearchService implements SearchService {
 			}
 			limit = effectiveLimit;
 			/* Note, this can't be more than 1000 (Crashes) */
-			queryOptions = queryOptions.setLimit(limit); 
+			queryOptions = queryOptions.setLimit(limit);
 		}
 		Query query = Query.newBuilder().setOptions(queryOptions).build(queryString);
 		Future<Results<ScoredDocument>> searchAsync = index.searchAsync(query);
-		if (profiler != null) {
-			searchAsync = new ProfilableFuture<Results<ScoredDocument>>(Profiler.CategorySearch, queryString, profiler, searchAsync);
-		}
 		Logger.debug("Text search on %s: %s", index.getName(), queryString);
 		return new SearchResult<T>(type, searchAsync, searchRequest.offset());
 	}

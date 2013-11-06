@@ -25,8 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 
-import javax.inject.Inject;
-
 import com.atomicleopard.expressive.Cast;
 import com.atomicleopard.expressive.ETransformer;
 import com.google.appengine.api.urlfetch.HTTPRequest;
@@ -40,8 +38,6 @@ import com.threewks.thundr.http.service.typeTransformer.IncomingInputStreamTypeT
 import com.threewks.thundr.http.service.typeTransformer.IncomingStringTypeTransformer;
 import com.threewks.thundr.http.service.typeTransformer.OutgoingDefaultTypeTransformer;
 import com.threewks.thundr.http.service.typeTransformer.OutgoingStringTypeTransformer;
-import com.threewks.thundr.profiler.ProfilableFuture;
-import com.threewks.thundr.profiler.Profiler;
 
 public class HttpServiceImpl implements HttpService {
 	private Map<Class<?>, ETransformer<?, InputStream>> outgoingTypeConvertors = new LinkedHashMap<Class<?>, ETransformer<?, InputStream>>();
@@ -49,8 +45,6 @@ public class HttpServiceImpl implements HttpService {
 	private Map<Class<?>, ETransformer<InputStream, ?>> incomingTypeConvertors = new HashMap<Class<?>, ETransformer<InputStream, ?>>();
 
 	private URLFetchService fetchService;
-	@Inject
-	public Profiler profiler = Profiler.None;
 
 	public HttpServiceImpl(URLFetchService fetchService) {
 		this.fetchService = fetchService;
@@ -100,9 +94,7 @@ public class HttpServiceImpl implements HttpService {
 	}
 
 	public HttpResponseImpl fetch(HTTPRequest request) {
-		boolean profile = profiler != null && profiler != Profiler.None;
-		String data = profile ? request.getMethod() + " " + request.getURL() : null;
-		Future<HTTPResponse> fetchAsync = profile ? new ProfilableFuture<HTTPResponse>(Profiler.CategoryHttp, data, profiler, fetchService.fetchAsync(request)) : fetchService.fetchAsync(request);
+		Future<HTTPResponse> fetchAsync = fetchService.fetchAsync(request);
 		return new HttpResponseImpl(fetchAsync, this);
 	}
 }

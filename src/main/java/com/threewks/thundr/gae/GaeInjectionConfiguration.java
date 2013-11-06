@@ -22,20 +22,24 @@ import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 import com.threewks.thundr.configuration.Environment;
 import com.threewks.thundr.http.service.HttpService;
 import com.threewks.thundr.http.service.gae.HttpServiceImpl;
-import com.threewks.thundr.injection.InjectionConfiguration;
+import com.threewks.thundr.injection.BaseInjectionConfiguration;
 import com.threewks.thundr.injection.UpdatableInjectionContext;
 import com.threewks.thundr.logger.Logger;
 
-public class GaeInjectionConfiguration implements InjectionConfiguration {
+public class GaeInjectionConfiguration extends BaseInjectionConfiguration {
 	@Override
-	public void configure(UpdatableInjectionContext injectionContext) {
+	public void initialise(UpdatableInjectionContext injectionContext) {
+		super.initialise(injectionContext);
 		Environment.set(GaeEnvironment.applicationId());
 		String environment = Environment.get();
 		Logger.info("Running as environment %s", environment);
+		injectionContext.inject(environment).named("environment").as(String.class);
+	}
 
+	@Override
+	public void configure(UpdatableInjectionContext injectionContext) {
 		URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
 		injectionContext.inject(urlFetchService).as(URLFetchService.class);
 		injectionContext.inject(HttpServiceImpl.class).as(HttpService.class);
-		injectionContext.inject(environment).named("environment").as(String.class);
 	}
 }
