@@ -25,6 +25,8 @@ import com.threewks.thundr.http.service.gae.HttpServiceImpl;
 import com.threewks.thundr.injection.BaseInjectionConfiguration;
 import com.threewks.thundr.injection.UpdatableInjectionContext;
 import com.threewks.thundr.logger.Logger;
+import com.threewks.thundr.search.google.GoogleSearchService;
+import com.threewks.thundr.search.google.SearchService;
 
 public class GaeInjectionConfiguration extends BaseInjectionConfiguration {
 	@Override
@@ -41,5 +43,6 @@ public class GaeInjectionConfiguration extends BaseInjectionConfiguration {
 		URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
 		injectionContext.inject(urlFetchService).as(URLFetchService.class);
 		injectionContext.inject(HttpServiceImpl.class).as(HttpService.class);
+		injectionContext.inject(GoogleSearchService.class).as(SearchService.class);
 	}
 }

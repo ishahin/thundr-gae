@@ -52,6 +52,7 @@
 
 	<properties>
 		<gae.version>1.8.7</gae.version>
+		<objectify.version>4.0rc1</objectify.version>
 	</properties>
 
 	<dependencies>
@@ -69,6 +70,12 @@
 			<scope>compile</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>com.googlecode.objectify</groupId>
+			<artifactId>objectify</artifactId>
+			<version>${objectify.version}</version>
+			<scope>compile</scope>
+		</dependency>
 		<!-- GAE API dependency -->
 		<dependency>
 			<groupId>com.google.appengine</groupId>
@@ -90,7 +97,7 @@
 			<version>${gae.version}</version>
 			<scope>test</scope>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.simpleframework</groupId>
 			<artifactId>simple</artifactId>
@@ -124,6 +131,18 @@
 				<configuration>
 					<connectionType>connection</connectionType>
 				</configuration>
+			</plugin>
+			<plugin> <!-- Build test jar -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>2.2</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>test-jar</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
