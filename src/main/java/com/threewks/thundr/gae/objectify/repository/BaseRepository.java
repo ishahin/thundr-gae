@@ -20,6 +20,7 @@ package com.threewks.thundr.gae.objectify.repository;
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +38,7 @@ import com.threewks.thundr.search.google.SearchResult;
 import com.threewks.thundr.search.google.SearchService;
 
 public class BaseRepository<E extends RepositoryEntity> {
+	protected ETransformer<Iterable<E>, EList<Long>> toIds;
 	protected ETransformer<Collection<E>, Map<String, E>> stringIdLookup;
 	protected SearchService searchService;
 	protected Class<E> entityType;
@@ -47,6 +49,8 @@ public class BaseRepository<E extends RepositoryEntity> {
 		this.entityType = entityType;
 		this.fieldsToIndex = searchableFields;
 		this.stringIdLookup = Expressive.Transformers.toKeyBeanLookup("id", entityType);
+		ETransformer<E, Long> toId = Expressive.Transformers.toProperty("id", entityType);
+		this.toIds = Expressive.Transformers.transformAllUsing(toId);
 	}
 
 	public List<String> getFieldsToIndex() {
@@ -54,29 +58,44 @@ public class BaseRepository<E extends RepositoryEntity> {
 	}
 
 	public AsyncResult<E> save(final E entity) {
-		// if no id exists - we need objectify to complete so that the id can be used in indexing the record.
-		if (entity.getId() != null) {
-			final Result<Key<E>> ofyFuture = ofy().save().entity(entity);
-			final IndexOperation searchFuture = searchService.index(entity, String.valueOf(entity.getId()), getFieldsToIndex());
-			return new AsyncResult<E>() {
-				@Override
-				public E complete() {
-					ofyFuture.now();
-					searchFuture.complete();
-					return entity;
-				}
-			};
-		} else {
-			ofy().save().entity(entity).now();
-			final IndexOperation searchFuture = searchService.index(entity, Transformers.IdToString.from(entity.getId()), getFieldsToIndex());
-			return new AsyncResult<E>() {
-				@Override
-				public E complete() {
-					searchFuture.complete();
-					return entity;
-				}
-			};
+		Long initialId = entity.getId();
+		final Result<Key<E>> ofyFuture = ofy().save().entity(entity);
+		if (initialId == null) {
+			// if no id exists - we need objectify to complete so that the id can be used in indexing the record.
+			ofyFuture.now();
 		}
+		final IndexOperation searchFuture = searchService.index(entity, String.valueOf(entity.getId()), getFieldsToIndex());
+		return new AsyncResult<E>() {
+			@Override
+			public E complete() {
+				ofyFuture.now();
+				searchFuture.complete();
+				return entity;
+			}
+		};
+	}
+
+	@SuppressWarnings("unchecked")
+	public AsyncResult<List<E>> save(E... entities) {
+		return save(Arrays.asList(entities));
+	}
+
+	public AsyncResult<List<E>> save(final List<E> entities) {
+		List<Long> ids = toIds.from(entities);
+		final Result<Map<Key<E>, E>> ofyFuture = ofy().save().entities(entities);
+		if (ids.contains(null)) {
+			ofyFuture.now(); // force sync save
+		}
+		Map<String, E> entityLookup = stringIdLookup.from(entities);
+		final IndexOperation searchFuture = searchService.index(entityLookup, getFieldsToIndex());
+		return new AsyncResult<List<E>>() {
+			@Override
+			public List<E> complete() {
+				ofyFuture.now();
+				searchFuture.complete();
+				return entities;
+			}
+		};
 	}
 
 	public E load(Long id) {
@@ -84,11 +103,13 @@ public class BaseRepository<E extends RepositoryEntity> {
 	}
 
 	public List<E> load(List<Long> ids) {
-		return new ArrayList<E>(ofy().load().type(entityType).ids(ids).values());
+		Map<Long, E> results = ofy().load().type(entityType).ids(ids);
+		return Expressive.Transformers.transformAllUsing(Expressive.Transformers.usingLookup(results)).from(ids);
 	}
 
 	public List<E> load(Long... ids) {
-		return new ArrayList<E>(ofy().load().type(entityType).ids(ids).values());
+		Map<Long, E> results = ofy().load().type(entityType).ids(ids);
+		return Expressive.Transformers.transformAllUsing(Expressive.Transformers.usingLookup(results)).from(ids);
 	}
 
 	public List<E> list(int count) {

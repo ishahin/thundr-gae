@@ -17,12 +17,23 @@
  */
 package com.threewks.thundr.gae;
 
+import java.util.Collections;
+
+import javax.cache.Cache;
+import javax.cache.CacheException;
+import javax.cache.CacheFactory;
+import javax.cache.CacheManager;
+
+import com.google.appengine.api.memcache.MemcacheService;
+import com.google.appengine.api.memcache.MemcacheServiceFactory;
+import com.google.appengine.api.search.SearchServiceFactory;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 import com.threewks.thundr.configuration.Environment;
 import com.threewks.thundr.http.service.HttpService;
 import com.threewks.thundr.http.service.gae.HttpServiceImpl;
 import com.threewks.thundr.injection.BaseInjectionConfiguration;
+import com.threewks.thundr.injection.InjectionException;
 import com.threewks.thundr.injection.UpdatableInjectionContext;
 import com.threewks.thundr.logger.Logger;
 import com.threewks.thundr.search.google.GoogleSearchService;
@@ -41,8 +52,25 @@ public class GaeInjectionConfiguration extends BaseInjectionConfiguration {
 	@Override
 	public void configure(UpdatableInjectionContext injectionContext) {
 		URLFetchService urlFetchService = URLFetchServiceFactory.getURLFetchService();
+		MemcacheService memcacheService = MemcacheServiceFactory.getMemcacheService();
+		com.google.appengine.api.search.SearchService searchService = SearchServiceFactory.getSearchService();
+		Cache cache = initialiseJCache();
+
+		injectionContext.inject(cache).as(Cache.class);
+		injectionContext.inject(memcacheService).as(MemcacheService.class);
 		injectionContext.inject(urlFetchService).as(URLFetchService.class);
 		injectionContext.inject(HttpServiceImpl.class).as(HttpService.class);
 		injectionContext.inject(GoogleSearchService.class).as(SearchService.class);
+		injectionContext.inject(searchService).as(com.google.appengine.api.search.SearchService.class);
+	}
+
+	private Cache initialiseJCache() {
+		try {
+			CacheFactory cacheFactory = CacheManager.getInstance().getCacheFactory();
+			Cache cache = cacheFactory.createCache(Collections.emptyMap());
+			return cache;
+		} catch (CacheException e) {
+			throw new InjectionException(e, "Failed to initialise %s: %s", Cache.class.getName(), e.getMessage());
+		}
 	}
 }
