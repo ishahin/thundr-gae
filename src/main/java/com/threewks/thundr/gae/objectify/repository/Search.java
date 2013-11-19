@@ -41,6 +41,10 @@ public class Search<E extends RepositoryEntity> {
 		return repository.completeSearch(this);
 	}
 
+	public List<Long> searchIds() {
+		return repository.completeIdSearch(this);
+	}
+
 	public int reindex(int batchSize, ReindexOperation<E> reindexOp) {
 		return repository.reindex(this, batchSize, reindexOp);
 	}

@@ -29,6 +29,7 @@ import com.google.appengine.api.memcache.MemcacheServiceFactory;
 import com.google.appengine.api.search.SearchServiceFactory;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+import com.google.appengine.api.utils.SystemProperty;
 import com.threewks.thundr.configuration.Environment;
 import com.threewks.thundr.http.service.HttpService;
 import com.threewks.thundr.http.service.gae.HttpServiceImpl;
@@ -38,6 +39,7 @@ import com.threewks.thundr.injection.UpdatableInjectionContext;
 import com.threewks.thundr.logger.Logger;
 import com.threewks.thundr.search.google.GoogleSearchService;
 import com.threewks.thundr.search.google.SearchService;
+import com.threewks.thundr.view.GlobalModel;
 
 public class GaeInjectionConfiguration extends BaseInjectionConfiguration {
 	@Override
@@ -62,6 +64,10 @@ public class GaeInjectionConfiguration extends BaseInjectionConfiguration {
 		injectionContext.inject(HttpServiceImpl.class).as(HttpService.class);
 		injectionContext.inject(GoogleSearchService.class).as(SearchService.class);
 		injectionContext.inject(searchService).as(com.google.appengine.api.search.SearchService.class);
+		
+		GlobalModel globalModel = injectionContext.get(GlobalModel.class);
+		globalModel.put("applicationVersion", SystemProperty.applicationVersion.get());
+		globalModel.put("environment", GaeEnvironment.applicationId());
 	}
 
 	private Cache initialiseJCache() {

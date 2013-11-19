@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.appengine.api.urlfetch.URLFetchService;
+import com.google.appengine.api.utils.SystemProperty;
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalMemcacheServiceTestConfig;
 import com.google.appengine.tools.development.testing.LocalSearchServiceTestConfig;
@@ -35,6 +36,7 @@ import com.threewks.thundr.configuration.Environment;
 import com.threewks.thundr.http.service.HttpService;
 import com.threewks.thundr.injection.InjectionContextImpl;
 import com.threewks.thundr.injection.UpdatableInjectionContext;
+import com.threewks.thundr.view.GlobalModel;
 
 public class GaeInjectionConfigurationTest {
 	private LocalServiceTestHelper helper;
@@ -71,8 +73,21 @@ public class GaeInjectionConfigurationTest {
 
 	@Test
 	public void shouldInjectHttpService() {
+		injectionContext.inject(new GlobalModel()).as(GlobalModel.class);
 		new GaeInjectionConfiguration().configure(injectionContext);
 		assertThat(injectionContext.get(HttpService.class), is(notNullValue()));
 		assertThat(injectionContext.get(URLFetchService.class), is(notNullValue()));
+	}
+
+	@Test
+	public void shouldSetApplicationVersionAndEnvironmentIntoGlobalModel() {
+		GlobalModel globalModel = new GlobalModel();
+		injectionContext.inject(globalModel).as(GlobalModel.class);
+		SystemProperty.applicationVersion.set("123.45");
+		SystemProperty.applicationId.set("testing");
+
+		new GaeInjectionConfiguration().configure(injectionContext);
+		assertThat(globalModel.get("applicationVersion"), is((Object) "123.45"));
+		assertThat(globalModel.get("environment"), is((Object) "dev"));
 	}
 }

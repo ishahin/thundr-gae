@@ -19,10 +19,10 @@ package com.threewks.thundr.gae.objectify.repository;
 
 import static com.googlecode.objectify.ObjectifyService.ofy;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +30,7 @@ import com.atomicleopard.expressive.EList;
 import com.atomicleopard.expressive.ETransformer;
 import com.atomicleopard.expressive.Expressive;
 import com.atomicleopard.expressive.transform.CollectionTransformer;
+import com.google.common.collect.Lists;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
 import com.threewks.thundr.logger.Logger;
@@ -37,9 +38,11 @@ import com.threewks.thundr.search.google.IndexOperation;
 import com.threewks.thundr.search.google.SearchResult;
 import com.threewks.thundr.search.google.SearchService;
 
-public class BaseRepository<E extends RepositoryEntity> {
-	protected ETransformer<Iterable<E>, EList<Long>> toIds;
+public class BaseRepository<E extends RepositoryEntity> implements Repository<E> {
+	protected CollectionTransformer<E, Long> toIds;
+	protected ETransformer<E, Long> toId;
 	protected ETransformer<Collection<E>, Map<String, E>> stringIdLookup;
+	protected ETransformer<Collection<E>, Map<Long, E>> idLookup;
 	protected SearchService searchService;
 	protected Class<E> entityType;
 	protected List<String> fieldsToIndex;
@@ -48,15 +51,28 @@ public class BaseRepository<E extends RepositoryEntity> {
 		this.searchService = searchService;
 		this.entityType = entityType;
 		this.fieldsToIndex = searchableFields;
-		this.stringIdLookup = Expressive.Transformers.toKeyBeanLookup("id", entityType);
-		ETransformer<E, Long> toId = Expressive.Transformers.toProperty("id", entityType);
+		this.toId = Expressive.Transformers.toProperty("id", entityType);
 		this.toIds = Expressive.Transformers.transformAllUsing(toId);
+		this.idLookup = Expressive.Transformers.toKeyBeanLookup("id", entityType);
+		this.stringIdLookup = new ETransformer<Collection<E>, Map<String, E>>() {
+			@Override
+			public Map<String, E> from(Collection<E> from) {
+				Map<Long, E> lookup = idLookup.from(from);
+				Map<String, E> results = new LinkedHashMap<>(lookup.size());
+				for (Map.Entry<Long, E> entry : lookup.entrySet()) {
+					String id = Transformers.IdToString.from(entry.getKey());
+					results.put(id, entry.getValue());
+				}
+				return results;
+			}
+		};
 	}
 
 	public List<String> getFieldsToIndex() {
 		return fieldsToIndex;
 	}
 
+	@Override
 	public AsyncResult<E> save(final E entity) {
 		Long initialId = entity.getId();
 		final Result<Key<E>> ofyFuture = ofy().save().entity(entity);
@@ -75,11 +91,13 @@ public class BaseRepository<E extends RepositoryEntity> {
 		};
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public AsyncResult<List<E>> save(E... entities) {
 		return save(Arrays.asList(entities));
 	}
 
+	@Override
 	public AsyncResult<List<E>> save(final List<E> entities) {
 		List<Long> ids = toIds.from(entities);
 		final Result<Map<Key<E>, E>> ofyFuture = ofy().save().entities(entities);
@@ -98,43 +116,58 @@ public class BaseRepository<E extends RepositoryEntity> {
 		};
 	}
 
+	@Override
 	public E load(Long id) {
 		return ofy().load().type(entityType).id(id).now();
 	}
 
+	@Override
 	public List<E> load(List<Long> ids) {
 		Map<Long, E> results = ofy().load().type(entityType).ids(ids);
 		return Expressive.Transformers.transformAllUsing(Expressive.Transformers.usingLookup(results)).from(ids);
 	}
 
+	@Override
 	public List<E> load(Long... ids) {
 		Map<Long, E> results = ofy().load().type(entityType).ids(ids);
 		return Expressive.Transformers.transformAllUsing(Expressive.Transformers.usingLookup(results)).from(ids);
 	}
 
+	@Override
 	public List<E> list(int count) {
 		return ofy().load().type(entityType).limit(count).list();
 	}
 
+	@Override
 	public List<E> loadByField(String field, String value) {
 		return ofy().load().type(entityType).filter(field, value).list();
 	}
 
+	@Override
 	public List<E> loadByField(String field, List<String> values) {
 		return ofy().load().type(entityType).filter(field + " in", values).list();
 	}
 
+	@Override
 	public Search<E> search() {
 		return new Search<>(this, searchService.search(entityType));
 	}
 
+	@Override
 	public List<E> completeSearch(Search<E> search) {
-		SearchResult<E> results = search.searchRequest.search();
-		EList<Long> articleIds = Transformers.IdsFromStrings.from(results.getSearchResultIds());
-		articleIds = articleIds.removeItems((Long) null);
+		List<Long> articleIds = completeIdSearch(search);
 		return load(articleIds);
 	}
 
+	@Override
+	public List<Long> completeIdSearch(Search<E> search) {
+		SearchResult<E> results = search.searchRequest.search();
+		EList<Long> articleIds = Transformers.IdsFromStrings.from(results.getSearchResultIds());
+		articleIds = articleIds.removeItems((Long) null);
+		return articleIds;
+	}
+
+	@Override
 	public AsyncResult<Void> delete(long id) {
 		String stringId = Transformers.IdToString.from(id);
 		final Result<Void> ofyDelete = ofy().delete().type(entityType).id(id);
@@ -149,10 +182,21 @@ public class BaseRepository<E extends RepositoryEntity> {
 		};
 	}
 
+	@Override
 	public AsyncResult<Void> delete(E e) {
-		String stringId = Transformers.IdToString.from(e.getId());
-		final Result<Void> ofyDelete = ofy().delete().entity(e);
-		final IndexOperation searchDelete = searchService.remove(entityType, Collections.singleton(stringId));
+		return delete(e.getId());
+	}
+
+	@Override
+	public AsyncResult<Void> delete(Long... ids) {
+		return delete(Arrays.asList(ids));
+	}
+
+	@Override
+	public AsyncResult<Void> delete(List<Long> ids) {
+		List<String> stringIds = Transformers.IdsToStrings.from(ids);
+		final Result<Void> ofyDelete = ofy().delete().type(entityType).ids(ids);
+		final IndexOperation searchDelete = searchService.remove(entityType, stringIds);
 		return new AsyncResult<Void>() {
 			@Override
 			public Void complete() {
@@ -163,6 +207,13 @@ public class BaseRepository<E extends RepositoryEntity> {
 		};
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public AsyncResult<Void> delete(E... entities) {
+		List<Long> ids = toIds.from(entities);
+		return delete(ids);
+	}
+
 	/**
 	 * Reindexes all the entities matching the given search operation. The given {@link ReindexOperation}, if present will be applied to each batch of entities.
 	 * 
@@ -171,11 +222,12 @@ public class BaseRepository<E extends RepositoryEntity> {
 	 * @param reindexOperation
 	 * @return the overall count of re-indexed entities.
 	 */
+	@Override
 	public int reindex(Search<E> search, int batchSize, ReindexOperation<E> reindexOperation) {
 		List<String> fieldsToIndex = getFieldsToIndex();
 		int count = 0;
 		List<E> results = completeSearch(search);
-		List<List<E>> batches = partition(results, batchSize);
+		List<List<E>> batches = Lists.partition(results, batchSize);
 		for (List<E> batch : batches) {
 			batch = reindexOperation == null ? batch : reindexOperation.apply(batch);
 			Map<String, E> keyedLookup = stringIdLookup.from(batch);
@@ -188,39 +240,5 @@ public class BaseRepository<E extends RepositoryEntity> {
 			Logger.info("Reindexed %d entities of type %s, %d of %d", keyedLookup.size(), entityType.getSimpleName(), count, results.size());
 		}
 		return count;
-	}
-
-	public static class Transformers {
-		public static final ETransformer<Long, String> IdToString = new ETransformer<Long, String>() {
-			@Override
-			public String from(Long from) {
-				return String.valueOf(from);
-			}
-		};
-		public static final ETransformer<String, Long> IdFromString = new ETransformer<String, Long>() {
-			@Override
-			public Long from(String from) {
-				try {
-					return Long.valueOf(from);
-				} catch (Exception e) {
-					Logger.warn("Obtained an article search result with an invalid id: %s", from);
-					return null;
-				}
-			}
-		};
-		public static final CollectionTransformer<String, Long> IdsFromStrings = Expressive.Transformers.transformAllUsing(IdFromString);
-		public static final CollectionTransformer<Long, String> IdsToStrings = Expressive.Transformers.transformAllUsing(IdToString);
-
-	}
-
-	protected static <T> List<List<T>> partition(List<T> source, int size) {
-		List<List<T>> batches = new ArrayList<List<T>>();
-		for (int i = 0; i < source.size(); i += size) {
-			int end = Math.min(source.size() - i, i + size);
-			List<T> batch = source.subList(i, end);
-			batches.add(batch);
-		}
-
-		return batches;
 	}
 }
