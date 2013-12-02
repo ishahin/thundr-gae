@@ -26,7 +26,7 @@ public class SearchResultTest {
 	@Before
 	public void setUp() throws Exception {
 		when(searchAsync.get()).thenReturn(mockResults());
-		searchResult = new SearchResult(String.class, searchAsync, 1);
+		searchResult = new SearchResult<>(String.class, searchAsync, 1);
 	}
 
 	private MockResults<ScoredDocument> mockResults() {
@@ -38,7 +38,7 @@ public class SearchResultTest {
 
 		List<ScoredDocument> docs = asList(doc1Builder.build(), doc2Builder.build());
 
-		return new MockResults(docs);
+		return new MockResults<>(docs);
 	}
 
 	@Test
