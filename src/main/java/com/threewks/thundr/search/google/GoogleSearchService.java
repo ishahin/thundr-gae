@@ -17,44 +17,23 @@
  */
 package com.threewks.thundr.search.google;
 
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
-
-import jodd.bean.BeanUtil;
-
-import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
-
 import com.atomicleopard.expressive.Cast;
 import com.atomicleopard.expressive.collection.Pair;
 import com.atomicleopard.expressive.collection.Triplets;
-import com.google.appengine.api.search.Document;
+import com.google.appengine.api.search.*;
 import com.google.appengine.api.search.Document.Builder;
-import com.google.appengine.api.search.Field;
-import com.google.appengine.api.search.GeoPoint;
-import com.google.appengine.api.search.GetRequest;
-import com.google.appengine.api.search.GetResponse;
-import com.google.appengine.api.search.Index;
-import com.google.appengine.api.search.IndexSpec;
-import com.google.appengine.api.search.PutResponse;
-import com.google.appengine.api.search.Query;
-import com.google.appengine.api.search.QueryOptions;
-import com.google.appengine.api.search.Results;
-import com.google.appengine.api.search.ScoredDocument;
-import com.google.appengine.api.search.SearchServiceFactory;
-import com.google.appengine.api.search.SortExpression;
-import com.google.appengine.api.search.SortOptions;
 import com.threewks.thundr.logger.Logger;
 import com.threewks.thundr.profiler.ProfilableFuture;
 import com.threewks.thundr.profiler.Profiler;
+import jodd.bean.BeanUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
+
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 public class GoogleSearchService implements SearchService {
 	private com.google.appengine.api.search.SearchService searchService = SearchServiceFactory.getSearchService();
@@ -72,7 +51,7 @@ public class GoogleSearchService implements SearchService {
 		Class<T> as = getType(object);
 		Index index = getIndex(as);
 		Map<String, Object> map = extractSearchableFields(object, fields);
-		Document document = buildDocument(as, id, map);
+		Document document = buildDocument(id, map);
 		Future<PutResponse> putAsync = index.putAsync(document);
 		return new IndexOperation(putAsync);
 	}
@@ -91,7 +70,7 @@ public class GoogleSearchService implements SearchService {
 				String id = entry.getKey();
 				T object = entry.getValue();
 				Map<String, Object> fieldValues = extractSearchableFields(object, fields);
-				Document document = buildDocument(as, id, fieldValues);
+				Document document = buildDocument(id, fieldValues);
 				documents.add(document);
 			}
 			future = index.putAsync(documents);
@@ -172,7 +151,12 @@ public class GoogleSearchService implements SearchService {
 		return new SearchResult<T>(type, searchAsync, searchRequest.offset());
 	}
 
-	private Index getIndex(Class<?> type) {
+	private <T> Index getIndex(T t) {
+		Class<T> type = getType(t);
+		return getIndex(type);
+	}
+
+	protected <T> Index getIndex(Class<T> type) {
 		String indexName = type.getName().replaceAll("\\.", "-");
 		return searchService.getIndex(IndexSpec.newBuilder().setName(indexName));
 	}
@@ -269,7 +253,7 @@ public class GoogleSearchService implements SearchService {
 		return map;
 	}
 
-	private <T> Document buildDocument(Class<T> as, String id, Map<String, Object> fields) {
+	private <T> Document buildDocument(String id, Map<String, Object> fields) {
 		Builder documentBuilder = Document.newBuilder();
 		documentBuilder.setId(id);
 		for (Map.Entry<String, Object> fieldData : fields.entrySet()) {
@@ -280,7 +264,7 @@ public class GoogleSearchService implements SearchService {
 					Field field = buildField(fieldName, value);
 					documentBuilder.addField(field);
 				} catch (Exception e) {
-					throw new SearchException(e, "Failed to index type %s with id %s for field %s with a value of %s: %s", as.getSimpleName(), id, fieldName, value.toString(), e.getMessage());
+					throw new SearchException(e, "Failed to add field '%s' with value '%s' to document with id '%s': %s", fieldName, value.toString(), id, e.getMessage());
 				}
 			}
 		}
