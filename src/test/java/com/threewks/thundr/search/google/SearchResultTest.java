@@ -26,7 +26,6 @@ public class SearchResultTest {
 	@Before
 	public void setUp() throws Exception {
 		when(searchAsync.get()).thenReturn(mockResults());
-		searchResult = new SearchResult<>(String.class, searchAsync, 1);
 	}
 
 	private MockResults<ScoredDocument> mockResults() {
@@ -42,18 +41,28 @@ public class SearchResultTest {
 	}
 
 	@Test
-	public void shouldGetSearchResultIds() {
+	public void shouldGetTwoSearchResultIds() {
+		searchResult = new SearchResult<>(String.class, searchAsync, 0);
 		List<String> expectedResults = asList("docId1", "docId2");
 		assertThat(this.searchResult.getSearchResultIds(), is(expectedResults));
 	}
 
 	@Test
-	public void shouldGetMatchingRecords() {
+	public void shouldGetOneSearchResultIds() {
+		searchResult = new SearchResult<>(String.class, searchAsync, 1);
+		List<String> expectedResults = asList("docId2");
+		assertThat(this.searchResult.getSearchResultIds(), is(expectedResults));
+	}
+
+	@Test
+	public void shouldGetTwoMatchingRecords() {
+		searchResult = new SearchResult<>(String.class, searchAsync, 1);
 		assertThat(this.searchResult.getMatchingRecordCount(), is(2L));
 	}
 
 	@Test
-	public void shouldReturnedRecords() {
+	public void shouldOneReturnedRecords() {
+		searchResult = new SearchResult<>(String.class, searchAsync, 1);
 		assertThat(this.searchResult.getReturnedRecordCount(), is(1L));
 	}
 
