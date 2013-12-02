@@ -59,27 +59,27 @@ public class SearchResultTest {
 	}
 
 	@Test
-	public void shouldGetTwoSearchResultIds() {
+	public void shouldGetTwoSearchResultIdsOffsetIsZero() {
 		searchResult = new SearchResult<>(String.class, searchAsync, 0);
 		List<String> expectedResults = asList("docId1", "docId2");
 		assertThat(this.searchResult.getSearchResultIds(), is(expectedResults));
 	}
 
 	@Test
-	public void shouldGetOneSearchResultIds() {
+	public void shouldGetOneSearchResultIdsOffsetIsOne() {
 		searchResult = new SearchResult<>(String.class, searchAsync, 1);
 		List<String> expectedResults = asList("docId2");
 		assertThat(this.searchResult.getSearchResultIds(), is(expectedResults));
 	}
 
 	@Test
-	public void shouldGetTwoMatchingRecords() {
+	public void shouldGetTwoMatchingRecordsOffsetIsOne() {
 		searchResult = new SearchResult<>(String.class, searchAsync, 1);
 		assertThat(this.searchResult.getMatchingRecordCount(), is(2L));
 	}
 
 	@Test
-	public void shouldOneReturnedRecords() {
+	public void shouldGetOneReturnedRecordWhenOffsetIsOne() {
 		searchResult = new SearchResult<>(String.class, searchAsync, 1);
 		assertThat(this.searchResult.getReturnedRecordCount(), is(1L));
 	}
