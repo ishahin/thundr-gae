@@ -17,23 +17,44 @@
  */
 package com.threewks.thundr.search.google;
 
-import com.atomicleopard.expressive.Cast;
-import com.atomicleopard.expressive.collection.Pair;
-import com.atomicleopard.expressive.collection.Triplets;
-import com.google.appengine.api.search.*;
-import com.google.appengine.api.search.Document.Builder;
-import com.threewks.thundr.logger.Logger;
-import com.threewks.thundr.profiler.ProfilableFuture;
-import com.threewks.thundr.profiler.Profiler;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+
 import jodd.bean.BeanUtil;
+
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
+import com.atomicleopard.expressive.Cast;
+import com.atomicleopard.expressive.collection.Pair;
+import com.atomicleopard.expressive.collection.Triplets;
+import com.google.appengine.api.search.Document;
+import com.google.appengine.api.search.Document.Builder;
+import com.google.appengine.api.search.Field;
+import com.google.appengine.api.search.GeoPoint;
+import com.google.appengine.api.search.GetRequest;
+import com.google.appengine.api.search.GetResponse;
+import com.google.appengine.api.search.Index;
+import com.google.appengine.api.search.IndexSpec;
+import com.google.appengine.api.search.PutResponse;
+import com.google.appengine.api.search.Query;
+import com.google.appengine.api.search.QueryOptions;
+import com.google.appengine.api.search.Results;
+import com.google.appengine.api.search.ScoredDocument;
+import com.google.appengine.api.search.SearchServiceFactory;
+import com.google.appengine.api.search.SortExpression;
+import com.google.appengine.api.search.SortOptions;
+import com.threewks.thundr.logger.Logger;
+import com.threewks.thundr.profiler.ProfilableFuture;
+import com.threewks.thundr.profiler.Profiler;
 
 public class GoogleSearchService implements SearchService {
 	private com.google.appengine.api.search.SearchService searchService = SearchServiceFactory.getSearchService();
@@ -140,7 +161,7 @@ public class GoogleSearchService implements SearchService {
 			}
 			limit = effectiveLimit;
 			/* Note, this can't be more than 1000 (Crashes) */
-			queryOptions = queryOptions.setLimit(limit); 
+			queryOptions = queryOptions.setLimit(limit);
 		}
 		Query query = Query.newBuilder().setOptions(queryOptions).build(queryString);
 		Future<Results<ScoredDocument>> searchAsync = index.searchAsync(query);
@@ -149,11 +170,6 @@ public class GoogleSearchService implements SearchService {
 		}
 		Logger.debug("Text search on %s: %s", index.getName(), queryString);
 		return new SearchResult<T>(type, searchAsync, searchRequest.offset());
-	}
-
-	private <T> Index getIndex(T t) {
-		Class<T> type = getType(t);
-		return getIndex(type);
 	}
 
 	protected <T> Index getIndex(Class<T> type) {

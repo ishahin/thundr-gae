@@ -38,7 +38,8 @@ import static org.mockito.Mockito.when;
 public class SearchResultTest {
 
 	private SearchResult<String> searchResult;
-	private Future searchAsync = mock(Future.class);
+	@SuppressWarnings("unchecked")
+	private Future<Results<ScoredDocument>> searchAsync = mock(Future.class);
 
 	@Before
 	public void setUp() throws Exception {
@@ -75,6 +76,7 @@ public class SearchResultTest {
 	}
 
 	private class MockResults<T> extends Results<T> {
+		private static final long serialVersionUID = 754439389254135943L;
 		private List<T> results;
 
 		public MockResults(List<T> results) {
