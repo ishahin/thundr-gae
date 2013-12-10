@@ -17,38 +17,28 @@
  */
 package com.threewks.thundr.search.google;
 
-import static com.atomicleopard.expressive.Expressive.list;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.anyListOf;
-import static org.mockito.Mockito.*;
-
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
+import com.atomicleopard.expressive.Expressive;
+import com.google.appengine.api.search.*;
+import com.google.appengine.api.search.SearchService;
+import com.google.appengine.tools.development.testing.LocalSearchServiceTestConfig;
+import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
+import com.threewks.thundr.test.TestSupport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
-import com.atomicleopard.expressive.Expressive;
-import com.google.appengine.api.search.Document;
-import com.google.appengine.api.search.GetRequest;
-import com.google.appengine.api.search.GetResponse;
-import com.google.appengine.api.search.Index;
-import com.google.appengine.api.search.IndexSpec;
-import com.google.appengine.api.search.PutResponse;
-import com.google.appengine.api.search.SearchService;
-import com.google.appengine.tools.development.testing.LocalSearchServiceTestConfig;
-import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
-import com.threewks.thundr.test.TestSupport;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import static com.atomicleopard.expressive.Expressive.list;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.*;
 
 public class SearchServiceTest {
 
@@ -205,6 +195,22 @@ public class SearchServiceTest {
 		verify(index).delete(list("1", "2"));
 		assertThat(count, is(2));
 
+	}
+
+	@Test
+	public void shouldIndexWithCustomIndex() {
+		final Index customIndex = mock(Index.class);
+
+		GoogleSearchService searchService = new GoogleSearchService() {
+			@Override
+			protected <T> Index getIndex(Class<T> type) {
+				return customIndex;
+			}
+		};
+
+		searchService.index(testType, "1", list("intType", "longType", "bigDecType", "stringType", "dateType", "boolType"));
+
+		verify(customIndex).putAsync(any(Document.class));
 	}
 
 	private Document mockDocument(String idg) {

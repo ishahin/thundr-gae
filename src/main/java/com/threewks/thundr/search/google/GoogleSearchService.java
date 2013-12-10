@@ -65,7 +65,7 @@ public class GoogleSearchService implements SearchService {
 		Class<T> as = getType(object);
 		Index index = getIndex(as);
 		Map<String, Object> map = extractSearchableFields(object, fields);
-		Document document = buildDocument(as, id, map);
+		Document document = buildDocument(id, map);
 		Future<PutResponse> putAsync = index.putAsync(document);
 		return new IndexOperation(putAsync);
 	}
@@ -84,7 +84,7 @@ public class GoogleSearchService implements SearchService {
 				String id = entry.getKey();
 				T object = entry.getValue();
 				Map<String, Object> fieldValues = extractSearchableFields(object, fields);
-				Document document = buildDocument(as, id, fieldValues);
+				Document document = buildDocument(id, fieldValues);
 				documents.add(document);
 			}
 			future = index.putAsync(documents);
@@ -162,7 +162,7 @@ public class GoogleSearchService implements SearchService {
 		return new SearchResult<T>(type, searchAsync, searchRequest.offset());
 	}
 
-	private Index getIndex(Class<?> type) {
+	protected <T> Index getIndex(Class<T> type) {
 		String indexName = type.getName().replaceAll("\\.", "-");
 		return searchService.getIndex(IndexSpec.newBuilder().setName(indexName));
 	}
@@ -259,7 +259,7 @@ public class GoogleSearchService implements SearchService {
 		return map;
 	}
 
-	private <T> Document buildDocument(Class<T> as, String id, Map<String, Object> fields) {
+	private <T> Document buildDocument(String id, Map<String, Object> fields) {
 		Builder documentBuilder = Document.newBuilder();
 		documentBuilder.setId(id);
 		for (Map.Entry<String, Object> fieldData : fields.entrySet()) {
@@ -270,7 +270,7 @@ public class GoogleSearchService implements SearchService {
 					Field field = buildField(fieldName, value);
 					documentBuilder.addField(field);
 				} catch (Exception e) {
-					throw new SearchException(e, "Failed to index type %s with id %s for field %s with a value of %s: %s", as.getSimpleName(), id, fieldName, value.toString(), e.getMessage());
+					throw new SearchException(e, "Failed to add field '%s' with value '%s' to document with id '%s': %s", fieldName, value.toString(), id, e.getMessage());
 				}
 			}
 		}
