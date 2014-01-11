@@ -33,6 +33,7 @@ import com.atomicleopard.expressive.transform.CollectionTransformer;
 import com.google.common.collect.Lists;
 import com.googlecode.objectify.Key;
 import com.googlecode.objectify.Result;
+import com.threewks.thundr.exception.BaseException;
 import com.threewks.thundr.logger.Logger;
 import com.threewks.thundr.search.google.IndexOperation;
 import com.threewks.thundr.search.google.SearchResult;
@@ -80,12 +81,14 @@ public class BaseRepository<E extends RepositoryEntity> implements Repository<E>
 			// if no id exists - we need objectify to complete so that the id can be used in indexing the record.
 			ofyFuture.now();
 		}
-		final IndexOperation searchFuture = searchService.index(entity, String.valueOf(entity.getId()), getFieldsToIndex());
+		final IndexOperation searchFuture = shouldSearch() ? searchService.index(entity, String.valueOf(entity.getId()), getFieldsToIndex()) : null;
 		return new AsyncResult<E>() {
 			@Override
 			public E complete() {
 				ofyFuture.now();
-				searchFuture.complete();
+				if (searchFuture != null) {
+					searchFuture.complete();
+				}
 				return entity;
 			}
 		};
@@ -105,12 +108,14 @@ public class BaseRepository<E extends RepositoryEntity> implements Repository<E>
 			ofyFuture.now(); // force sync save
 		}
 		Map<String, E> entityLookup = stringIdLookup.from(entities);
-		final IndexOperation searchFuture = searchService.index(entityLookup, getFieldsToIndex());
+		final IndexOperation searchFuture = shouldSearch() ? searchService.index(entityLookup, getFieldsToIndex()) : null;
 		return new AsyncResult<List<E>>() {
 			@Override
 			public List<E> complete() {
 				ofyFuture.now();
-				searchFuture.complete();
+				if (searchFuture != null) {
+					searchFuture.complete();
+				}
 				return entities;
 			}
 		};
@@ -150,6 +155,9 @@ public class BaseRepository<E extends RepositoryEntity> implements Repository<E>
 
 	@Override
 	public Search<E> search() {
+		if (!shouldSearch()) {
+			throw new BaseException("Unable to search on type %s - there are no searchable fields", entityType.getSimpleName());
+		}
 		return new Search<>(this, searchService.search(entityType));
 	}
 
@@ -171,12 +179,14 @@ public class BaseRepository<E extends RepositoryEntity> implements Repository<E>
 	public AsyncResult<Void> delete(long id) {
 		String stringId = Transformers.IdToString.from(id);
 		final Result<Void> ofyDelete = ofy().delete().type(entityType).id(id);
-		final IndexOperation searchDelete = searchService.remove(entityType, Collections.singleton(stringId));
+		final IndexOperation searchDelete = shouldSearch() ? searchService.remove(entityType, Collections.singleton(stringId)) : null;
 		return new AsyncResult<Void>() {
 			@Override
 			public Void complete() {
 				ofyDelete.now();
-				searchDelete.complete();
+				if (searchDelete != null) {
+					searchDelete.complete();
+				}
 				return null;
 			}
 		};
@@ -196,12 +206,15 @@ public class BaseRepository<E extends RepositoryEntity> implements Repository<E>
 	public AsyncResult<Void> delete(List<Long> ids) {
 		List<String> stringIds = Transformers.IdsToStrings.from(ids);
 		final Result<Void> ofyDelete = ofy().delete().type(entityType).ids(ids);
-		final IndexOperation searchDelete = searchService.remove(entityType, stringIds);
+
+		final IndexOperation searchDelete = shouldSearch() ? searchService.remove(entityType, stringIds) : null;
 		return new AsyncResult<Void>() {
 			@Override
 			public Void complete() {
 				ofyDelete.now();
-				searchDelete.complete();
+				if (searchDelete != null) {
+					searchDelete.complete();
+				}
 				return null;
 			}
 		};
@@ -235,10 +248,17 @@ public class BaseRepository<E extends RepositoryEntity> implements Repository<E>
 				// we only re-save the batch when a re-index op is supplied, otherwise the data can't have changed.
 				ofy().save().entities(batch).now();
 			}
-			searchService.index(keyedLookup, fieldsToIndex).complete();
+			if (shouldSearch()) {
+				searchService.index(keyedLookup, fieldsToIndex).complete();
+			}
 			count += batch.size();
 			Logger.info("Reindexed %d entities of type %s, %d of %d", keyedLookup.size(), entityType.getSimpleName(), count, results.size());
 		}
 		return count;
+	}
+
+	protected boolean shouldSearch() {
+		List<String> fieldsToIndex = getFieldsToIndex();
+		return fieldsToIndex != null && !fieldsToIndex.isEmpty() && searchService != null;
 	}
 }
