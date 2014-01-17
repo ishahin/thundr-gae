@@ -139,12 +139,12 @@ public class BaseRepository<E extends RepositoryEntity> implements Repository<E>
 	}
 
 	@Override
-	public List<E> loadByField(String field, String value) {
+	public List<E> loadByField(String field, Object value) {
 		return ofy().load().type(entityType).filter(field, value).list();
 	}
 
 	@Override
-	public List<E> loadByField(String field, List<String> values) {
+	public List<E> loadByField(String field, List<Object> values) {
 		return ofy().load().type(entityType).filter(field + " in", values).list();
 	}
 
