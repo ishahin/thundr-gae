@@ -20,10 +20,10 @@ package com.threewks.thundr.gae.objectify;
 import com.googlecode.objectify.ObjectifyFactory;
 import com.googlecode.objectify.ObjectifyService;
 import com.googlecode.objectify.impl.translate.opt.joda.JodaTimeTranslators;
-import com.threewks.thundr.injection.BaseInjectionConfiguration;
+import com.threewks.thundr.injection.BaseModule;
 import com.threewks.thundr.injection.UpdatableInjectionContext;
 
-public class ObjectifyInjectionConfiguration extends BaseInjectionConfiguration {
+public class ObjectifyModule extends BaseModule {
 
 	@Override
 	public void initialise(UpdatableInjectionContext injectionContext) {

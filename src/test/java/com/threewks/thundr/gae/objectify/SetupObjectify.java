@@ -36,7 +36,7 @@ public class SetupObjectify extends ExternalResource {
 	@Override
 	protected void before() throws Throwable {
 		ObjectifyFactory factory = new ObjectifyFactory();
-		ObjectifyInjectionConfiguration.runBasicConfiguration(factory);
+		ObjectifyModule.runBasicConfiguration(factory);
 		for (Class<?> type : register) {
 			factory.register(type);
 		}

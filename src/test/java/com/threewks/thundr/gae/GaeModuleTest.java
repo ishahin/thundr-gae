@@ -38,7 +38,7 @@ import com.threewks.thundr.injection.InjectionContextImpl;
 import com.threewks.thundr.injection.UpdatableInjectionContext;
 import com.threewks.thundr.view.GlobalModel;
 
-public class GaeInjectionConfigurationTest {
+public class GaeModuleTest {
 	private LocalServiceTestHelper helper;
 	private UpdatableInjectionContext injectionContext = new InjectionContextImpl();
 
@@ -61,20 +61,20 @@ public class GaeInjectionConfigurationTest {
 	@Test
 	public void shouldSetThundrEnvironmentFromAppengineEnvironment() {
 		Environment.set(null);
-		new GaeInjectionConfiguration().initialise(injectionContext);
+		new GaeModule().initialise(injectionContext);
 		assertThat(Environment.get(), is("dev"));
 	}
 
 	@Test
 	public void shouldInjectEnvironmentStringIntoInjectionContextWhenNoEnvironmentDefined() {
-		new GaeInjectionConfiguration().initialise(injectionContext);
+		new GaeModule().initialise(injectionContext);
 		assertThat(injectionContext.get(String.class, "environment"), is("dev"));
 	}
 
 	@Test
 	public void shouldInjectHttpService() {
 		injectionContext.inject(new GlobalModel()).as(GlobalModel.class);
-		new GaeInjectionConfiguration().configure(injectionContext);
+		new GaeModule().configure(injectionContext);
 		assertThat(injectionContext.get(HttpService.class), is(notNullValue()));
 		assertThat(injectionContext.get(URLFetchService.class), is(notNullValue()));
 	}
@@ -86,7 +86,7 @@ public class GaeInjectionConfigurationTest {
 		SystemProperty.applicationVersion.set("123.45");
 		SystemProperty.applicationId.set("testing");
 
-		new GaeInjectionConfiguration().configure(injectionContext);
+		new GaeModule().configure(injectionContext);
 		assertThat(globalModel.get("applicationVersion"), is((Object) "123.45"));
 		assertThat(globalModel.get("environment"), is((Object) "dev"));
 	}

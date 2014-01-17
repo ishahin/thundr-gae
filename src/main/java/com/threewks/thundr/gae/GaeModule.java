@@ -33,7 +33,7 @@ import com.google.appengine.api.utils.SystemProperty;
 import com.threewks.thundr.configuration.Environment;
 import com.threewks.thundr.http.service.HttpService;
 import com.threewks.thundr.http.service.gae.HttpServiceImpl;
-import com.threewks.thundr.injection.BaseInjectionConfiguration;
+import com.threewks.thundr.injection.BaseModule;
 import com.threewks.thundr.injection.InjectionException;
 import com.threewks.thundr.injection.UpdatableInjectionContext;
 import com.threewks.thundr.logger.Logger;
@@ -41,7 +41,7 @@ import com.threewks.thundr.search.google.GoogleSearchService;
 import com.threewks.thundr.search.google.SearchService;
 import com.threewks.thundr.view.GlobalModel;
 
-public class GaeInjectionConfiguration extends BaseInjectionConfiguration {
+public class GaeModule extends BaseModule {
 	@Override
 	public void initialise(UpdatableInjectionContext injectionContext) {
 		super.initialise(injectionContext);
