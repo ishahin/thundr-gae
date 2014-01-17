@@ -17,12 +17,12 @@
  */
 package com.threewks.thundr.gae.objectify.repository;
 
-import java.util.List;
-
 import com.atomicleopard.expressive.ETransformer;
 import com.atomicleopard.expressive.Expressive;
 import com.atomicleopard.expressive.transform.CollectionTransformer;
 import com.threewks.thundr.logger.Logger;
+
+import java.util.List;
 
 public interface Repository<E extends RepositoryEntity> {
 	public AsyncResult<E> save(final E entity);
@@ -40,9 +40,9 @@ public interface Repository<E extends RepositoryEntity> {
 
 	public List<E> list(int count);
 
-	public List<E> loadByField(String field, String value);
+	public List<E> loadByField(String field, Object value);
 
-	public List<E> loadByField(String field, List<String> values);
+	public List<E> loadByField(String field, List<Object> values);
 
 	public Search<E> search();
 
