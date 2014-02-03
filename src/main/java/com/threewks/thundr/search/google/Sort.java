@@ -17,6 +17,9 @@
  */
 package com.threewks.thundr.search.google;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 public class Sort {
 	private String field;
 	private boolean descending;
@@ -36,31 +39,13 @@ public class Sort {
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (descending ? 1231 : 1237);
-		result = prime * result + ((field == null) ? 0 : field.hashCode());
-		return result;
+	public boolean equals(Object obj) {
+		return EqualsBuilder.reflectionEquals(this, obj);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Sort other = (Sort) obj;
-		if (descending != other.descending)
-			return false;
-		if (field == null) {
-			if (other.field != null)
-				return false;
-		} else if (!field.equals(other.field))
-			return false;
-		return true;
+	public int hashCode() {
+		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
 	@Override

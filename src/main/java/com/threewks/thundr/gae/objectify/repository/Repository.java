@@ -17,47 +17,147 @@
  */
 package com.threewks.thundr.gae.objectify.repository;
 
+import java.util.List;
+
 import com.atomicleopard.expressive.ETransformer;
 import com.atomicleopard.expressive.Expressive;
 import com.atomicleopard.expressive.transform.CollectionTransformer;
 import com.threewks.thundr.logger.Logger;
 
-import java.util.List;
-
 public interface Repository<E extends RepositoryEntity> {
 	public AsyncResult<E> save(final E entity);
 
+	/**
+	 * Save the given entities.
+	 * 
+	 * @param entities
+	 * @return an async result to complete the save operation
+	 */
 	@SuppressWarnings("unchecked")
 	public AsyncResult<List<E>> save(E... entities);
 
+	/**
+	 * Save the given entities.
+	 * 
+	 * @param entities
+	 * @return an async result to complete the save operation
+	 */
 	public AsyncResult<List<E>> save(final List<E> entities);
 
+	/**
+	 * Load the entity with the given id
+	 * 
+	 * @param id
+	 * @return the entity, or null if no entity exists
+	 */
 	public E load(Long id);
 
+	/**
+	 * Load the entities with the given ids
+	 * 
+	 * @param ids
+	 * @return a list containing an entry for each corresponding id, containing the entity or null if none exists
+	 */
 	public List<E> load(Long... ids);
 
+	/**
+	 * Load the entities with the given ids
+	 * 
+	 * @param ids
+	 * @return a list containing an entry for each corresponding id, containing the entity or null if none exists
+	 */
 	public List<E> load(List<Long> ids);
 
+	/**
+	 * List up to count entities.
+	 * This will load all entities into memory, so should only be used where the number of entities is constrained.
+	 * 
+	 * @param count
+	 * @return
+	 */
 	public List<E> list(int count);
 
+	/**
+	 * Load all entities whose field has the value of the given object.
+	 * Note that the given field must be indexed for anything to be returned.
+	 * This will load all entities into memory, so should only be used where the number of entities is constrained.
+	 * 
+	 * @param field
+	 * @param value
+	 * @return
+	 */
 	public List<E> loadByField(String field, Object value);
 
+	/**
+	 * Load all entities who field has the values of any of the given objects.
+	 * Note that the given field must be indexed for anything to be returned.
+	 * This will load all entities into memory, so should only be used where the number of entities is constrained.
+	 * 
+	 * @param field
+	 * @param values
+	 * @return
+	 */
 	public List<E> loadByField(String field, List<Object> values);
 
+	/**
+	 * @return a builder for a search operation
+	 */
 	public Search<E> search();
 
+	/**
+	 * Used by implementations to complete a search. You should use the fluent {@link #search()} call instead.
+	 * 
+	 * @param search
+	 * @return
+	 */
 	public List<E> completeSearch(Search<E> search);
 
+	/**
+	 * Used by implementations to complete a search. You should use the fluent {@link #search()} call instead.
+	 * 
+	 * @param search
+	 * @return
+	 */
 	public List<Long> completeIdSearch(Search<E> search);
 
+	/**
+	 * Delete the entity with the given id
+	 * 
+	 * @param id
+	 * @return an async operation used to complete the delete operation
+	 */
 	public AsyncResult<Void> delete(long id);
 
+	/**
+	 * Delete the entities with the given ids
+	 * 
+	 * @param ids
+	 * @return an async operation used to complete the delete operation
+	 */
 	public AsyncResult<Void> delete(Long... ids);
 
+	/**
+	 * Delete the entities with the given ids
+	 * 
+	 * @param ids
+	 * @return an async operation used to complete the delete operation
+	 */
 	public AsyncResult<Void> delete(List<Long> ids);
 
+	/**
+	 * Delete the given entity
+	 * 
+	 * @param entity
+	 * @return an async operation used to complete the delete operation
+	 */
 	public AsyncResult<Void> delete(E entity);
 
+	/**
+	 * Delete the given entities
+	 * 
+	 * @param ids
+	 * @return an async operation used to complete the delete operation
+	 */
 	@SuppressWarnings("unchecked")
 	public AsyncResult<Void> delete(E... entities);
 
