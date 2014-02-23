@@ -5,11 +5,11 @@ Google Appengine (GAE) is a PaaS provided and run by Google. You can read more a
 
 You can see a sample of a thundr-gae app in action [here](http://gae.thundr-sample.appspot.com) and check out the source of this demo app [here](https://github.com/3wks/thundr-sample).
 
-You can read more about thundr in general [here](http://3wks.gitub.com/thundr).
+You can read more about thundr in general [here](http://3wks.github.io/thundr/).
 
 ## Getting it
 
-To get started with thundr on GAE, you can follow the instructions [here](http://3wks.github.io/thundr/modules/thundr-gae/appengine.html#settingUp)
+To get started with thundr on GAE, you can follow the instructions [here](http://3wks.github.io/thundr/thundr-gae/index.html)
 
 --------------    
 thundr-gae - Copyright (C) 2013 3wks
