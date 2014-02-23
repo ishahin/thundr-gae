@@ -9,7 +9,7 @@ You can read more about thundr in general [here](http://3wks.gitub.com/thundr).
 
 ## Getting it
 
-To get started with thundr on GAE, you can follow the instructions [here](http://3wks.github.io/thundr/modules/thundr-gae/appengine.html#settingUp)
+To get started with thundr on GAE, you can follow the instructions [here](http://3wks.github.io/thundr/thundr-gae/index.html)
 
 --------------    
 thundr-gae - Copyright (C) 2013 3wks
